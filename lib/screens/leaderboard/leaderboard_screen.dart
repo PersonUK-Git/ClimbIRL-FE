@@ -16,6 +16,7 @@ class LeaderboardScreen extends StatelessWidget {
     return BlocBuilder<LeaderboardCubit, LeaderboardState>(
       builder: (context, state) {
         return SafeArea(
+          bottom: false,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -113,7 +114,7 @@ class LeaderboardScreen extends StatelessWidget {
               // Rest of rankings
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                   itemCount: state.restOfList.length,
                   itemBuilder: (context, index) {
                     final entry = state.restOfList[index];
@@ -142,7 +143,7 @@ class LeaderboardScreen extends StatelessWidget {
               // Current user position
               if (state.currentUserEntry != null)
                 Container(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardTheme.color,
                     border: Border(
@@ -155,7 +156,12 @@ class LeaderboardScreen extends StatelessWidget {
                     entry: state.currentUserEntry!,
                     isCurrentUser: true,
                   ),
-                ),
+                ).animate().fadeIn(duration: 400.ms).slideY(
+                      begin: 0.5,
+                      end: 0,
+                      duration: 500.ms,
+                      curve: Curves.easeOutCubic,
+                    ),
             ],
           ),
         );

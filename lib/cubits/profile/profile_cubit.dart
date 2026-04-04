@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/utils/xp_utils.dart';
 import '../../data/mock/mock_achievements.dart';
 import '../../data/mock/mock_user.dart';
+import '../../models/user_model.dart';
 import 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
@@ -31,5 +32,9 @@ class ProfileCubit extends Cubit<ProfileState> {
         weeklyXP: weeklyXP,
       ),
     ));
+  }
+
+  void updateUser(UserModel newUser) {
+    emit(state.copyWith(user: newUser));
   }
 }

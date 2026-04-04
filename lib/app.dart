@@ -7,6 +7,9 @@ import 'cubits/task/task_cubit.dart';
 import 'cubits/profile/profile_cubit.dart';
 import 'cubits/leaderboard/leaderboard_cubit.dart';
 import 'widgets/app_bottom_nav.dart';
+import 'cubits/onboarding/onboarding_cubit.dart';
+import 'cubits/onboarding/onboarding_state.dart';
+import 'screens/onboarding/onboarding_screen.dart';
 
 class ClimbIRLApp extends StatelessWidget {
   const ClimbIRLApp({super.key});
@@ -19,16 +22,33 @@ class ClimbIRLApp extends StatelessWidget {
         BlocProvider(create: (_) => TaskCubit()),
         BlocProvider(create: (_) => ProfileCubit()),
         BlocProvider(create: (_) => LeaderboardCubit()),
+        BlocProvider(create: (_) => OnboardingCubit()..checkOnboardingStatus()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {
-          return MaterialApp(
-            title: 'ClimbIRL',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light,
-            darkTheme: AppTheme.dark,
-            themeMode: themeState.themeMode,
-            home: const AppBottomNav(),
+          return BlocBuilder<OnboardingCubit, OnboardingState>(
+            builder: (context, onboardingState) {
+              Widget home;
+              if (onboardingState is OnboardingCompleted) {
+                home = const AppBottomNav();
+              } else if (onboardingState is OnboardingInitial ||
+                  onboardingState is OnboardingLoading) {
+                home = const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              } else {
+                home = const OnboardingScreen();
+              }
+
+              return MaterialApp(
+                title: 'ClimbIRL',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.light,
+                darkTheme: AppTheme.dark,
+                themeMode: themeState.themeMode,
+                home: home,
+              );
+            },
           );
         },
       ),
