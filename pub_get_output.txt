@@ -1,0 +1,12 @@
+Resolving dependencies...
+Note: vector_math is pinned to version 2.1.4 by flutter_test from the flutter SDK.
+See https://dart.dev/go/sdk-version-pinning for details.
+
+
+Because every version of flutter_test from sdk depends on vector_math 2.1.4 and fl_chart >=1.1.1 depends on vector_math ^2.2.0, flutter_test from sdk is incompatible with fl_chart >=1.1.1.
+So, because climbirl depends on both fl_chart ^1.2.0 and flutter_test from sdk, version solving failed.
+
+
+You can try the following suggestion to make the pubspec resolve:
+* Consider downgrading your constraint on fl_chart: flutter pub add fl_chart:^1.1.0
+Failed to update packages.
