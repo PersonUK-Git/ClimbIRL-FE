@@ -20,6 +20,7 @@ class TasksScreen extends StatelessWidget {
     return BlocBuilder<TaskCubit, TaskState>(
       builder: (context, state) {
         return SafeArea(
+          bottom: false,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -135,7 +136,7 @@ class TasksScreen extends StatelessWidget {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                         itemCount: state.filteredTasks.length,
                         itemBuilder: (context, index) {
                           final task = state.filteredTasks[index];

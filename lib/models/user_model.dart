@@ -14,6 +14,9 @@ class UserModel extends Equatable {
   final int achievementsUnlocked;
   final List<int> weeklyXP; // Last 7 days XP
   final List<bool> streakDays; // Last 7 days streak
+  final String email;
+  final String gender;
+  final DateTime? dateOfBirth;
 
   const UserModel({
     required this.id,
@@ -29,6 +32,9 @@ class UserModel extends Equatable {
     this.achievementsUnlocked = 0,
     this.weeklyXP = const [0, 0, 0, 0, 0, 0, 0],
     this.streakDays = const [false, false, false, false, false, false, false],
+    this.email = '',
+    this.gender = '',
+    this.dateOfBirth,
   });
 
   UserModel copyWith({
@@ -45,6 +51,9 @@ class UserModel extends Equatable {
     int? achievementsUnlocked,
     List<int>? weeklyXP,
     List<bool>? streakDays,
+    String? email,
+    String? gender,
+    DateTime? dateOfBirth,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -60,6 +69,9 @@ class UserModel extends Equatable {
       achievementsUnlocked: achievementsUnlocked ?? this.achievementsUnlocked,
       weeklyXP: weeklyXP ?? this.weeklyXP,
       streakDays: streakDays ?? this.streakDays,
+      email: email ?? this.email,
+      gender: gender ?? this.gender,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
     );
   }
 
@@ -78,5 +90,8 @@ class UserModel extends Equatable {
         achievementsUnlocked,
         weeklyXP,
         streakDays,
+        email,
+        gender,
+        dateOfBirth,
       ];
 }

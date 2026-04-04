@@ -24,6 +24,7 @@ class ProfileScreen extends StatelessWidget {
         final progress = XPUtils.levelProgress(user.totalXP);
 
         return SafeArea(
+          bottom: false,
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
@@ -404,6 +405,9 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
               ),
             ],
           ),

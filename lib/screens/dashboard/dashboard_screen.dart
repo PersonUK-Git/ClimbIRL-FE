@@ -18,6 +18,7 @@ class DashboardScreen extends StatelessWidget {
     return BlocBuilder<ProfileCubit, ProfileState>(
       builder: (context, state) {
         return SafeArea(
+          bottom: false,
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
@@ -126,6 +127,9 @@ class DashboardScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
               ),
             ],
           ),
