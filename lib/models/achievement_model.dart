@@ -55,6 +55,38 @@ class AchievementModel extends Equatable {
     );
   }
 
+  factory AchievementModel.fromJson(Map<String, dynamic> json) {
+    return AchievementModel(
+      id: json['_id'] ?? json['id'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      iconName: json['iconName'] ?? '',
+      category: json['category'] ?? 'Tasks',
+      isUnlocked: json['isUnlocked'] ?? false,
+      progress: (json['progress'] ?? 0).toDouble(),
+      target: json['target'] ?? 1,
+      current: json['current'] ?? 0,
+      rarity: json['rarity'] ?? 'Common',
+      unlockedAt: json['unlockedAt'] != null ? DateTime.parse(json['unlockedAt']) : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'iconName': iconName,
+      'category': category,
+      'isUnlocked': isUnlocked,
+      'progress': progress,
+      'target': target,
+      'current': current,
+      'rarity': rarity,
+      'unlockedAt': unlockedAt?.toIso8601String(),
+    };
+  }
+
   @override
   List<Object?> get props => [
         id,

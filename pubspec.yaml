@@ -45,6 +45,8 @@ dependencies:
   equatable: ^2.0.8
   animated_scale_nav_bar: 1.0.2
   shared_preferences: ^2.5.3
+  http: ^1.6.0
+  logger: ^2.7.0
 
 dependency_overrides:
   vector_math: ^2.2.0

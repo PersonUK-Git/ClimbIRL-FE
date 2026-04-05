@@ -73,7 +73,7 @@ class DailyStreakCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(7, (index) {
-                  final active = user.streakDays[index];
+                  final active = index < user.streakDays.length && user.streakDays[index];
                   return Column(
                     children: [
                       Container(

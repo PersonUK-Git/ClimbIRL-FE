@@ -17,6 +17,7 @@ class UserModel extends Equatable {
   final String email;
   final String gender;
   final DateTime? dateOfBirth;
+  final int? rank; // New field for leaderboard rank
 
   const UserModel({
     required this.id,
@@ -35,6 +36,7 @@ class UserModel extends Equatable {
     this.email = '',
     this.gender = '',
     this.dateOfBirth,
+    this.rank,
   });
 
   UserModel copyWith({
@@ -54,6 +56,7 @@ class UserModel extends Equatable {
     String? email,
     String? gender,
     DateTime? dateOfBirth,
+    int? rank,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -72,7 +75,52 @@ class UserModel extends Equatable {
       email: email ?? this.email,
       gender: gender ?? this.gender,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      rank: rank ?? this.rank,
     );
+  }
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['_id'] ?? json['id'] ?? '',
+      name: json['name'] ?? '',
+      username: json['username'] ?? '',
+      avatarUrl: json['avatarUrl'] ?? '',
+      totalXP: json['totalXP'] ?? 0,
+      level: json['level'] ?? 1,
+      title: json['title'] ?? 'Newcomer',
+      currentStreak: json['currentStreak'] ?? 0,
+      longestStreak: json['longestStreak'] ?? 0,
+      tasksCompleted: json['tasksCompleted'] ?? 0,
+      achievementsUnlocked: json['achievementsUnlocked'] ?? 0,
+      weeklyXP: _parseWeeklyXP(json['weeklyXP']),
+      streakDays: _parseStreakDays(json['streakDays']),
+      email: json['email'] ?? '',
+      gender: json['gender'] ?? '',
+      dateOfBirth: json['dateOfBirth'] != null ? DateTime.parse(json['dateOfBirth']) : null,
+      rank: json['rank'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'username': username,
+      'avatarUrl': avatarUrl,
+      'totalXP': totalXP,
+      'level': level,
+      'title': title,
+      'currentStreak': currentStreak,
+      'longestStreak': longestStreak,
+      'tasksCompleted': tasksCompleted,
+      'achievementsUnlocked': achievementsUnlocked,
+      'weeklyXP': weeklyXP,
+      'streakDays': streakDays,
+      'email': email,
+      'gender': gender,
+      'dateOfBirth': dateOfBirth?.toIso8601String(),
+      'rank': rank,
+    };
   }
 
   @override
@@ -93,5 +141,28 @@ class UserModel extends Equatable {
         email,
         gender,
         dateOfBirth,
+        rank,
       ];
+
+  static List<int> _parseWeeklyXP(dynamic json) {
+    if (json == null || json is! List || json.isEmpty) {
+      return const [0, 0, 0, 0, 0, 0, 0];
+    }
+    final list = List<int>.from(json);
+    if (list.length < 7) {
+      return [...list, ...List.filled(7 - list.length, 0)];
+    }
+    return list.sublist(0, 7);
+  }
+
+  static List<bool> _parseStreakDays(dynamic json) {
+    if (json == null || json is! List || json.isEmpty) {
+      return const [false, false, false, false, false, false, false];
+    }
+    final list = List<bool>.from(json);
+    if (list.length < 7) {
+      return [...list, ...List.filled(7 - list.length, false)];
+    }
+    return list.sublist(0, 7);
+  }
 }

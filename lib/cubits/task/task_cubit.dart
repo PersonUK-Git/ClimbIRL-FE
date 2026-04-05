@@ -1,42 +1,63 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../data/mock/mock_tasks.dart';
+import '../../data/repositories/api_repository.dart';
 import '../../models/task_model.dart';
+import '../../models/user_model.dart';
 import 'task_state.dart';
 
 class TaskCubit extends Cubit<TaskState> {
-  TaskCubit() : super(TaskState(tasks: List.from(mockTasks)));
+  final ApiRepository repository;
+
+  TaskCubit({required this.repository}) : super(const TaskState());
+
+  Future<void> loadTasks() async {
+    final tasks = await repository.getTasks();
+    emit(state.copyWith(tasks: tasks));
+  }
 
   void setFilter(TaskFilter filter) {
     emit(state.copyWith(filter: filter));
   }
 
-  /// Toggle task completion. Returns the XP earned (positive) or lost (negative).
-  int toggleTask(String taskId) {
-    final tasks = state.tasks.map((task) {
-      if (task.id == taskId) {
-        final newCompleted = !task.isCompleted;
-        return task.copyWith(
+  /// Toggle task completion. Returns the updated User model if successful.
+  Future<UserModel?> toggleTask(String taskId) async {
+    // Optimistic UI update
+    final originalTasks = List<TaskModel>.from(state.tasks);
+    final updatedTasks = state.tasks.map((t) {
+      if (t.id == taskId) {
+        final newCompleted = !t.isCompleted;
+        return t.copyWith(
           isCompleted: newCompleted,
           completedAt: newCompleted ? DateTime.now() : null,
         );
       }
-      return task;
+      return t;
     }).toList();
+    emit(state.copyWith(tasks: updatedTasks));
 
-    final task = state.tasks.firstWhere((t) => t.id == taskId);
-    final xpDelta = task.isCompleted ? -task.xpReward : task.xpReward;
+    // Call backend
+    final updatedUser = await repository.completeTask(taskId);
+    if (updatedUser == null) {
+      // Revert if failed
+      emit(state.copyWith(tasks: originalTasks));
+      return null;
+    }
 
-    emit(state.copyWith(tasks: tasks));
-    return xpDelta;
+    return updatedUser;
   }
 
-  void addTask(TaskModel task) {
-    final tasks = [...state.tasks, task];
-    emit(state.copyWith(tasks: tasks));
+  Future<void> addTask(TaskModel task) async {
+    final newTask = await repository.createTask(task);
+    if (newTask != null) {
+      final tasks = [...state.tasks, newTask];
+      emit(state.copyWith(tasks: tasks));
+    }
   }
 
-  void removeTask(String taskId) {
-    final tasks = state.tasks.where((t) => t.id != taskId).toList();
-    emit(state.copyWith(tasks: tasks));
+  Future<void> removeTask(String taskId) async {
+    final success = await repository.deleteTask(taskId);
+    if (success) {
+      final tasks = state.tasks.where((t) => t.id != taskId).toList();
+      emit(state.copyWith(tasks: tasks));
+    }
   }
 }

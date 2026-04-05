@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../cubits/onboarding/onboarding_cubit.dart';
 
 import '../../cubits/profile/profile_cubit.dart';
+import '../../models/user_model.dart';
+import '../login/login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -23,6 +25,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _usernameController = TextEditingController();
   String? _selectedGender;
   DateTime? _selectedDate;
+  bool _isLoading = false;
 
   final List<OnboardingSlide> _introSlides = [
     const OnboardingSlide(
@@ -59,20 +62,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  void _handleComplete() {
+  Future<void> _handleComplete() async {
     final profileCubit = context.read<ProfileCubit>();
     final onboardingCubit = context.read<OnboardingCubit>();
 
-    final updatedUser = profileCubit.state.user.copyWith(
+    setState(() => _isLoading = true);
+
+    final updatedUser = UserModel(
+      id: '', // Server will assign ID
       name: _nameController.text.trim(),
       email: _emailController.text.trim(),
       username: _usernameController.text.trim(),
-      gender: _selectedGender,
+      gender: _selectedGender ?? '',
       dateOfBirth: _selectedDate,
     );
 
-    profileCubit.updateUser(updatedUser);
-    onboardingCubit.completeOnboarding();
+    final success = await profileCubit.register(updatedUser);
+
+    if (mounted) {
+      if (success) {
+        onboardingCubit.completeOnboarding();
+      } else {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registration failed. Email or Username might be taken.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   bool _isNavEnabled() {
@@ -184,9 +203,45 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                 ),
+                if (_currentPage < 4) ...[
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      );
+                    },
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(color: cs.onSurfaceVariant, fontSize: 15),
+                        children: [
+                          const TextSpan(text: 'Already have an account? '),
+                          TextSpan(
+                            text: 'Login',
+                            style: TextStyle(
+                              color: currentColor,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                              decorationColor: currentColor.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 400.ms),
+                ],
               ],
             ),
           ),
+
+          if (_isLoading)
+            Container(
+              color: Colors.black26,
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
         ],
       ),
     );
