@@ -217,10 +217,14 @@ class _TaskCard extends StatelessWidget {
           children: [
             // Checkbox
             GestureDetector(
-              onTap: () {
-                final xpDelta =
-                    context.read<TaskCubit>().toggleTask(task.id);
-                context.read<ProfileCubit>().addXP(xpDelta);
+              onTap: () async {
+                final taskCubit = context.read<TaskCubit>();
+                final profileCubit = context.read<ProfileCubit>();
+                
+                final updatedUser = await taskCubit.toggleTask(task.id);
+                if (updatedUser != null) {
+                  profileCubit.updateFromUser(updatedUser);
+                }
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),

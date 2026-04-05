@@ -7,11 +7,13 @@ class LeaderboardState extends Equatable {
   final List<LeaderboardEntryModel> entries;
   final LeaderboardPeriod period;
   final String currentUserId;
+  final bool isLoading;
 
   const LeaderboardState({
     this.entries = const [],
     this.period = LeaderboardPeriod.weekly,
     this.currentUserId = 'user_001',
+    this.isLoading = false,
   });
 
   List<LeaderboardEntryModel> get top3 =>
@@ -32,14 +34,16 @@ class LeaderboardState extends Equatable {
     List<LeaderboardEntryModel>? entries,
     LeaderboardPeriod? period,
     String? currentUserId,
+    bool? isLoading,
   }) {
     return LeaderboardState(
       entries: entries ?? this.entries,
       period: period ?? this.period,
       currentUserId: currentUserId ?? this.currentUserId,
+      isLoading: isLoading ?? this.isLoading,
     );
   }
 
   @override
-  List<Object?> get props => [entries, period, currentUserId];
+  List<Object?> get props => [entries, period, currentUserId, isLoading];
 }

@@ -47,6 +47,34 @@ class TaskModel extends Equatable {
     );
   }
 
+  factory TaskModel.fromJson(Map<String, dynamic> json) {
+    return TaskModel(
+      id: json['_id'] ?? json['id'] ?? '',
+      title: json['title'] ?? '',
+      category: json['category'] ?? '',
+      difficulty: json['difficulty'] ?? 'Medium',
+      xpReward: json['xpReward'] ?? 0,
+      isCompleted: json['isCompleted'] ?? false,
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
+      completedAt: json['completedAt'] != null ? DateTime.parse(json['completedAt']) : null,
+      dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'category': category,
+      'difficulty': difficulty,
+      'xpReward': xpReward,
+      'isCompleted': isCompleted,
+      'createdAt': createdAt.toIso8601String(),
+      'completedAt': completedAt?.toIso8601String(),
+      'dueDate': dueDate?.toIso8601String(),
+    };
+  }
+
   @override
   List<Object?> get props => [
         id,

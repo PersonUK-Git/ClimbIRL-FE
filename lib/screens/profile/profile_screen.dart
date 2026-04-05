@@ -6,6 +6,7 @@ import '../../cubits/profile/profile_cubit.dart';
 import '../../cubits/profile/profile_state.dart';
 import '../../cubits/theme/theme_cubit.dart';
 import '../../cubits/theme/theme_state.dart';
+import '../../cubits/auth/auth_cubit.dart';
 import '../../core/utils/xp_utils.dart';
 import '../../widgets/xp_bar.dart';
 import '../achievements/achievements_screen.dart';
@@ -42,31 +43,61 @@ class ProfileScreen extends StatelessWidget {
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-                          // Theme toggle
-                          BlocBuilder<ThemeCubit, ThemeState>(
-                            builder: (context, themeState) {
-                              final isDark =
-                                  themeState.themeMode == ThemeMode.dark ||
-                                      (themeState.themeMode ==
-                                              ThemeMode.system &&
-                                          MediaQuery.of(context)
-                                                  .platformBrightness ==
-                                              Brightness.dark);
-                              return IconButton(
+                          Row(
+                            children: [
+                              // Logout button
+                              IconButton(
                                 onPressed: () {
-                                  context.read<ThemeCubit>().toggleTheme();
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Logout'),
+                                      content: const Text('Are you sure you want to logout?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            context.read<AuthCubit>().logout();
+                                          },
+                                          child: const Text('Logout', style: TextStyle(color: Colors.red)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
                                 },
-                                icon: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 300),
-                                  child: Icon(
-                                    isDark
-                                        ? Icons.light_mode_rounded
-                                        : Icons.dark_mode_rounded,
-                                    key: ValueKey(isDark),
-                                  ),
-                                ),
-                              );
-                            },
+                                icon: const Icon(Icons.logout_rounded, color: Colors.grey),
+                              ),
+                              // Theme toggle
+                              BlocBuilder<ThemeCubit, ThemeState>(
+                                builder: (context, themeState) {
+                                  final isDark =
+                                      themeState.themeMode == ThemeMode.dark ||
+                                          (themeState.themeMode ==
+                                                  ThemeMode.system &&
+                                              MediaQuery.of(context)
+                                                      .platformBrightness ==
+                                                  Brightness.dark);
+                                  return IconButton(
+                                    onPressed: () {
+                                      context.read<ThemeCubit>().toggleTheme();
+                                    },
+                                    icon: AnimatedSwitcher(
+                                      duration: const Duration(milliseconds: 300),
+                                      child: Icon(
+                                        isDark
+                                            ? Icons.light_mode_rounded
+                                            : Icons.dark_mode_rounded,
+                                        key: ValueKey(isDark),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ).animate().fadeIn(duration: 400.ms),
@@ -107,7 +138,9 @@ class ProfileScreen extends StatelessWidget {
                                   radius: 36,
                                   backgroundColor: cs.primaryContainer,
                                   child: Text(
-                                    user.name[0],
+                                    user.name.isNotEmpty
+                                        ? user.name[0].toUpperCase()
+                                        : 'U',
                                     style: tt.headlineSmall?.copyWith(
                                       color: cs.onPrimaryContainer,
                                       fontWeight: FontWeight.w700,
@@ -248,9 +281,11 @@ class ProfileScreen extends StatelessWidget {
                               child: BarChart(
                                 BarChartData(
                                   alignment: BarChartAlignment.spaceAround,
-                                  maxY: (user.weeklyXP.reduce(
-                                              (a, b) => a > b ? a : b) *
-                                          1.3)
+                                  maxY: (user.weeklyXP.isEmpty
+                                          ? 100
+                                          : user.weeklyXP.reduce(
+                                                  (a, b) => a > b ? a : b) *
+                                              1.3)
                                       .toDouble(),
                                   barTouchData: BarTouchData(
                                     touchTooltipData: BarTouchTooltipData(

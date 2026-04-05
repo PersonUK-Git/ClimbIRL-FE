@@ -1,40 +1,52 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/utils/xp_utils.dart';
-import '../../data/mock/mock_achievements.dart';
-import '../../data/mock/mock_user.dart';
+import '../../data/repositories/api_repository.dart';
 import '../../models/user_model.dart';
 import 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
-  ProfileCubit()
-      : super(ProfileState(
-          user: mockUser,
-          achievements: List.from(mockAchievements),
+  final ApiRepository repository;
+
+  ProfileCubit({required this.repository})
+      : super(const ProfileState(
+          user: UserModel(id: '', name: '', username: ''),
+          achievements: [],
         ));
 
-  void addXP(int xp) {
-    final newTotalXP = state.user.totalXP + xp;
-    final newLevel = XPUtils.getLevel(newTotalXP);
-    final newTitle = XPUtils.getLevelTitle(newLevel);
-
-    // Update weekly XP (add to today)
-    final weeklyXP = List<int>.from(state.user.weeklyXP);
-    weeklyXP[6] = weeklyXP[6] + xp;
-
-    emit(state.copyWith(
-      user: state.user.copyWith(
-        totalXP: newTotalXP,
-        level: newLevel,
-        title: newTitle,
-        tasksCompleted: xp > 0
-            ? state.user.tasksCompleted + 1
-            : state.user.tasksCompleted - 1,
-        weeklyXP: weeklyXP,
-      ),
-    ));
+  Future<void> loadProfile() async {
+    final user = await repository.getProfile();
+    final achievements = await repository.getAchievements();
+    
+    if (user != null) {
+      emit(state.copyWith(user: user, achievements: achievements));
+    }
   }
 
-  void updateUser(UserModel newUser) {
-    emit(state.copyWith(user: newUser));
+  void updateFromUser(UserModel user) async {
+    final achievements = await repository.getAchievements();
+    emit(state.copyWith(user: user, achievements: achievements));
+  }
+
+  void addXP(int xp) {
+    // This is now handled by the backend when completing a task,
+    // but the UI might still call it. We refresh to stay in sync.
+    loadProfile();
+  }
+
+  Future<bool> updateUser(UserModel newUser) async {
+    final updatedUser = await repository.updateProfile(newUser);
+    if (updatedUser != null) {
+      emit(state.copyWith(user: updatedUser));
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> register(UserModel newUser) async {
+    final user = await repository.register(newUser);
+    if (user != null) {
+      emit(state.copyWith(user: user));
+      return true;
+    }
+    return false;
   }
 }

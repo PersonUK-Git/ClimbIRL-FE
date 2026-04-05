@@ -57,7 +57,9 @@ class DashboardScreen extends StatelessWidget {
                             backgroundColor:
                                 Theme.of(context).colorScheme.primaryContainer,
                             child: Text(
-                              state.user.name[0],
+                              state.user.name.isNotEmpty
+                                  ? state.user.name[0].toUpperCase()
+                                  : 'U',
                               style: tt.titleMedium?.copyWith(
                                 color: Theme.of(context)
                                     .colorScheme
