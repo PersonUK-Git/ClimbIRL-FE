@@ -7,6 +7,8 @@ import 'widgets/xp_progress_card.dart';
 import 'widgets/daily_streak_card.dart';
 import 'widgets/quick_stats_row.dart';
 import 'widgets/today_tasks_section.dart';
+import 'widgets/dashboard_skeleton.dart';
+
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -17,6 +19,14 @@ class DashboardScreen extends StatelessWidget {
 
     return BlocBuilder<ProfileCubit, ProfileState>(
       builder: (context, state) {
+        if (state.status == ProfileStatus.loading ||
+            state.status == ProfileStatus.initial) {
+          return const SafeArea(
+            bottom: false,
+            child: DashboardSkeleton(),
+          );
+        }
+
         return SafeArea(
           bottom: false,
           child: CustomScrollView(

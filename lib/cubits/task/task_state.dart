@@ -2,14 +2,19 @@ import 'package:equatable/equatable.dart';
 import '../../models/task_model.dart';
 
 enum TaskFilter { all, today, completed }
+enum TaskStatus { initial, loading, success, failure }
 
 class TaskState extends Equatable {
   final List<TaskModel> tasks;
   final TaskFilter filter;
+  final TaskStatus status;
+  final String? errorMessage;
 
   const TaskState({
     this.tasks = const [],
     this.filter = TaskFilter.all,
+    this.status = TaskStatus.initial,
+    this.errorMessage,
   });
 
   List<TaskModel> get filteredTasks {
@@ -47,13 +52,18 @@ class TaskState extends Equatable {
   TaskState copyWith({
     List<TaskModel>? tasks,
     TaskFilter? filter,
+    TaskStatus? status,
+    String? errorMessage,
   }) {
     return TaskState(
       tasks: tasks ?? this.tasks,
       filter: filter ?? this.filter,
+      status: status ?? this.status,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
   @override
-  List<Object?> get props => [tasks, filter];
+  List<Object?> get props => [tasks, filter, status, errorMessage];
 }
+

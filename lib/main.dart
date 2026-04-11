@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app.dart';
+import 'core/utils/update_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Check for updates on Google Play (Android only)
+  UpdateService.checkForUpdate();
   
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(

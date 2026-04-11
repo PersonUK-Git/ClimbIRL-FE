@@ -8,6 +8,8 @@ import '../../core/theme/app_colors.dart';
 import '../../models/task_model.dart';
 import '../../widgets/difficulty_chip.dart';
 import 'widgets/add_task_sheet.dart';
+import 'widgets/task_card_skeleton.dart';
+
 
 class TasksScreen extends StatelessWidget {
   const TasksScreen({super.key});
@@ -107,9 +109,19 @@ class TasksScreen extends StatelessWidget {
 
               // Task List
               Expanded(
-                child: state.filteredTasks.isEmpty
-                    ? Center(
-                        child: Column(
+                child: state.status == TaskStatus.loading ||
+                        state.status == TaskStatus.initial
+                    ? ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                        itemCount: 5,
+                        itemBuilder: (context, index) =>
+                            const TaskCardSkeleton().animate().fadeIn(
+                                  delay: Duration(milliseconds: 100 * index),
+                                ),
+                      )
+                    : state.filteredTasks.isEmpty
+                        ? Center(
+                            child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
