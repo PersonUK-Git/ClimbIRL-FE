@@ -13,13 +13,25 @@ class ProfileCubit extends Cubit<ProfileState> {
         ));
 
   Future<void> loadProfile() async {
-    final user = await repository.getProfile();
-    final achievements = await repository.getAchievements();
-    
-    if (user != null) {
-      emit(state.copyWith(user: user, achievements: achievements));
+    emit(state.copyWith(status: ProfileStatus.loading));
+    try {
+      final user = await repository.getProfile();
+      final achievements = await repository.getAchievements();
+      
+      if (user != null) {
+        emit(state.copyWith(
+          user: user, 
+          achievements: achievements,
+          status: ProfileStatus.success,
+        ));
+      } else {
+        emit(state.copyWith(status: ProfileStatus.failure, errorMessage: 'User profile not found'));
+      }
+    } catch (e) {
+      emit(state.copyWith(status: ProfileStatus.failure, errorMessage: e.toString()));
     }
   }
+
 
   void updateFromUser(UserModel user) async {
     final achievements = await repository.getAchievements();

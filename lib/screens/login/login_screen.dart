@@ -7,6 +7,7 @@ import '../../cubits/auth/auth_cubit.dart';
 import '../../cubits/profile/profile_cubit.dart';
 import '../../cubits/task/task_cubit.dart';
 import '../../cubits/leaderboard/leaderboard_cubit.dart';
+import '../../cubits/onboarding/onboarding_cubit.dart';
 import '../../data/repositories/api_repository.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -82,8 +83,14 @@ class _LoginScreenState extends State<LoginScreen> {
             content: const Text('User not found. Please register first via the Onboarding screen.'),
             backgroundColor: Colors.orangeAccent,
             action: SnackBarAction(
-              label: 'OK',
-              onPressed: () => Navigator.pop(context),
+              label: 'REGISTER',
+              onPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.pop(context);
+                } else {
+                  context.read<OnboardingCubit>().resetOnboarding();
+                }
+              },
               textColor: Colors.white,
             ),
           ),
@@ -152,13 +159,16 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                    style: IconButton.styleFrom(
-                      backgroundColor: cs.surfaceContainerHighest.withValues(alpha: 0.3),
-                    ),
-                  ),
+                  if (Navigator.canPop(context))
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                      style: IconButton.styleFrom(
+                        backgroundColor: cs.surfaceContainerHighest.withValues(alpha: 0.3),
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 48), // Spacer to maintain consistent layout
                   const SizedBox(height: 40),
                   
                   AnimatedSwitcher(

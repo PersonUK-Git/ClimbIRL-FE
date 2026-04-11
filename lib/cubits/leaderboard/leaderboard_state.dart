@@ -2,18 +2,21 @@ import 'package:equatable/equatable.dart';
 import '../../models/leaderboard_entry_model.dart';
 
 enum LeaderboardPeriod { weekly, monthly, allTime }
+enum LeaderboardStatus { initial, loading, success, failure }
 
 class LeaderboardState extends Equatable {
   final List<LeaderboardEntryModel> entries;
   final LeaderboardPeriod period;
   final String currentUserId;
-  final bool isLoading;
+  final LeaderboardStatus status;
+  final String? errorMessage;
 
   const LeaderboardState({
     this.entries = const [],
     this.period = LeaderboardPeriod.weekly,
     this.currentUserId = 'user_001',
-    this.isLoading = false,
+    this.status = LeaderboardStatus.initial,
+    this.errorMessage,
   });
 
   List<LeaderboardEntryModel> get top3 =>
@@ -34,16 +37,19 @@ class LeaderboardState extends Equatable {
     List<LeaderboardEntryModel>? entries,
     LeaderboardPeriod? period,
     String? currentUserId,
-    bool? isLoading,
+    LeaderboardStatus? status,
+    String? errorMessage,
   }) {
     return LeaderboardState(
       entries: entries ?? this.entries,
       period: period ?? this.period,
       currentUserId: currentUserId ?? this.currentUserId,
-      isLoading: isLoading ?? this.isLoading,
+      status: status ?? this.status,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
   @override
-  List<Object?> get props => [entries, period, currentUserId, isLoading];
+  List<Object?> get props => [entries, period, currentUserId, status, errorMessage];
 }
+

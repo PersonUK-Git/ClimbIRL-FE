@@ -276,4 +276,26 @@ class ApiRepository {
       return [];
     }
   }
+
+  Future<bool> deleteAccount() async {
+    try {
+      final token = await getToken();
+      final response = await http.delete(
+        Uri.parse(ApiConstants.profile),
+        headers: _getHeaders(token),
+      );
+
+      if (response.statusCode == 200) {
+        await clearToken();
+        return true;
+      } else {
+        _logger.e('Failed to delete account: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      _logger.e('Error deleting account', error: e);
+      return false;
+    }
+  }
 }
+

@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../cubits/leaderboard/leaderboard_cubit.dart';
 import '../../cubits/leaderboard/leaderboard_state.dart';
 import '../../models/leaderboard_entry_model.dart';
+import 'widgets/leaderboard_skeleton.dart';
 
 class LeaderboardScreen extends StatelessWidget {
   const LeaderboardScreen({super.key});
@@ -95,79 +96,85 @@ class LeaderboardScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              if (state.status == LeaderboardStatus.loading ||
+                  state.status == LeaderboardStatus.initial)
+                const Expanded(child: LeaderboardSkeleton())
+              else ...[
+                const SizedBox(height: 20),
 
-              // Podium
-              if (state.top3.length >= 3)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _PodiumSection(top3: state.top3),
-                ).animate().fadeIn(duration: 500.ms).scale(
-                      begin: const Offset(0.95, 0.95),
-                      end: const Offset(1, 1),
-                      duration: 500.ms,
-                      curve: Curves.easeOut,
-                    ),
+                // Podium
+                if (state.top3.length >= 3)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _PodiumSection(top3: state.top3),
+                  ).animate().fadeIn(duration: 500.ms).scale(
+                        begin: const Offset(0.95, 0.95),
+                        end: const Offset(1, 1),
+                        duration: 500.ms,
+                        curve: Curves.easeOut,
+                      ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              // Rest of rankings
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                  itemCount: state.restOfList.length,
-                  itemBuilder: (context, index) {
-                    final entry = state.restOfList[index];
-                    final isCurrentUser =
-                        entry.userId == state.currentUserId;
-                    return _RankCard(
-                      entry: entry,
-                      isCurrentUser: isCurrentUser,
-                    )
-                        .animate()
-                        .fadeIn(
-                          delay: Duration(milliseconds: 50 * index),
-                          duration: 400.ms,
-                        )
-                        .slideX(
-                          begin: 0.03,
-                          end: 0,
-                          delay: Duration(milliseconds: 50 * index),
-                          duration: 400.ms,
-                          curve: Curves.easeOut,
-                        );
-                  },
+                // Rest of rankings
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                    itemCount: state.restOfList.length,
+                    itemBuilder: (context, index) {
+                      final entry = state.restOfList[index];
+                      final isCurrentUser =
+                          entry.userId == state.currentUserId;
+                      return _RankCard(
+                        entry: entry,
+                        isCurrentUser: isCurrentUser,
+                      )
+                          .animate()
+                          .fadeIn(
+                            delay: Duration(milliseconds: 50 * index),
+                            duration: 400.ms,
+                          )
+                          .slideX(
+                            begin: 0.03,
+                            end: 0,
+                            delay: Duration(milliseconds: 50 * index),
+                            duration: 400.ms,
+                            curve: Curves.easeOut,
+                          );
+                    },
+                  ),
                 ),
-              ),
 
-              // Current user position
-              if (state.currentUserEntry != null)
-                Container(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardTheme.color,
-                    border: Border(
-                      top: BorderSide(
-                        color: cs.outlineVariant.withValues(alpha: 0.2),
+                // Current user position
+                if (state.currentUserEntry != null)
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardTheme.color,
+                      border: Border(
+                        top: BorderSide(
+                          color: cs.outlineVariant.withValues(alpha: 0.2),
+                        ),
                       ),
                     ),
-                  ),
-                  child: _RankCard(
-                    entry: state.currentUserEntry!,
-                    isCurrentUser: true,
-                  ),
-                ).animate().fadeIn(duration: 400.ms).slideY(
-                      begin: 0.5,
-                      end: 0,
-                      duration: 500.ms,
-                      curve: Curves.easeOutCubic,
+                    child: _RankCard(
+                      entry: state.currentUserEntry!,
+                      isCurrentUser: true,
                     ),
+                  ).animate().fadeIn(duration: 400.ms).slideY(
+                        begin: 0.5,
+                        end: 0,
+                        duration: 500.ms,
+                        curve: Curves.easeOutCubic,
+                      ),
+              ],
             ],
           ),
         );
       },
     );
   }
+
 }
 
 class _PodiumSection extends StatelessWidget {

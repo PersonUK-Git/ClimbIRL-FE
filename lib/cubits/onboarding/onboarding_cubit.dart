@@ -35,4 +35,15 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       emit(OnboardingCompleted());
     }
   }
+
+  Future<void> resetOnboarding() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_onboardingKey, false);
+      emit(OnboardingRequired());
+    } catch (e) {
+      emit(OnboardingRequired());
+    }
+  }
 }
+

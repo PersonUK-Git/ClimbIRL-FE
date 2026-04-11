@@ -9,35 +9,40 @@ class LeaderboardCubit extends Cubit<LeaderboardState> {
   LeaderboardCubit({required this.repository}) : super(const LeaderboardState());
 
   Future<void> loadLeaderboard() async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(status: LeaderboardStatus.loading));
     
-    // Map period enum to string for API
-    final periodString = switch (state.period) {
-      LeaderboardPeriod.weekly => 'weekly',
-      LeaderboardPeriod.monthly => 'monthly',
-      LeaderboardPeriod.allTime => 'allTime',
-    };
+    try {
+      // Map period enum to string for API
+      final periodString = switch (state.period) {
+        LeaderboardPeriod.weekly => 'weekly',
+        LeaderboardPeriod.monthly => 'monthly',
+        LeaderboardPeriod.allTime => 'allTime',
+      };
 
-    final users = await repository.getLeaderboard(period: periodString);
-    
-    // Map UserModel to LeaderboardEntryModel
-    final entries = users.map((user) {
-      return LeaderboardEntryModel(
-        userId: user.id,
-        name: user.name,
-        username: user.username,
-        avatarUrl: user.avatarUrl,
-        totalXP: user.totalXP,
-        level: user.level,
-        rank: user.rank ?? 0,
-      );
-    }).toList();
+      final users = await repository.getLeaderboard(period: periodString);
+      
+      // Map UserModel to LeaderboardEntryModel
+      final entries = users.map((user) {
+        return LeaderboardEntryModel(
+          userId: user.id,
+          name: user.name,
+          username: user.username,
+          avatarUrl: user.avatarUrl,
+          totalXP: user.totalXP,
+          level: user.level,
+          rank: user.rank ?? 0,
+        );
+      }).toList();
 
-    emit(state.copyWith(
-      entries: entries,
-      isLoading: false,
-    ));
+      emit(state.copyWith(
+        entries: entries,
+        status: LeaderboardStatus.success,
+      ));
+    } catch (e) {
+      emit(state.copyWith(status: LeaderboardStatus.failure, errorMessage: e.toString()));
+    }
   }
+
 
   void setPeriod(LeaderboardPeriod period) {
     emit(state.copyWith(period: period));

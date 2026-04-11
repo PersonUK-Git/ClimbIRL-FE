@@ -10,9 +10,15 @@ class TaskCubit extends Cubit<TaskState> {
   TaskCubit({required this.repository}) : super(const TaskState());
 
   Future<void> loadTasks() async {
-    final tasks = await repository.getTasks();
-    emit(state.copyWith(tasks: tasks));
+    emit(state.copyWith(status: TaskStatus.loading));
+    try {
+      final tasks = await repository.getTasks();
+      emit(state.copyWith(tasks: tasks, status: TaskStatus.success));
+    } catch (e) {
+      emit(state.copyWith(status: TaskStatus.failure, errorMessage: e.toString()));
+    }
   }
+
 
   void setFilter(TaskFilter filter) {
     emit(state.copyWith(filter: filter));
