@@ -250,7 +250,7 @@ class ProfileScreen extends StatelessWidget {
                             child: _StatCard(
                               icon: Icons.emoji_events_rounded,
                               label: 'Achievements',
-                              value: '${user.achievementsUnlocked}',
+                              value: '${state.unlockedAchievements.length}',
                               color: Colors.purple,
                             ),
                           ),

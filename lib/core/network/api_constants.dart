@@ -6,7 +6,7 @@ class ApiConstants {
 
   // Toggle this to switch between environments
   static const bool _isProd = true;
-
+  // static const bool _isProd = false;
   static const String baseUrl = _isProd ? _prodBaseUrl : _devBaseUrl;
 
   // Auth endpoints
@@ -26,9 +26,9 @@ class ApiConstants {
   static String getLeaderboardWithPeriod(String period) => '$leaderboard?period=$period';
 
   // Legal & Static pages
-  static const String privacyPolicy = '$baseUrl/privacy';
-  static const String termsOfService = '$baseUrl/terms';
-  static const String deleteAccountInfo = '$baseUrl/delete-account';
+  static final String privacyPolicy = baseUrl.replaceAll('/api', '') + '/privacy';
+  static final String termsOfService = baseUrl.replaceAll('/api', '') + '/terms';
+  static final String deleteAccountInfo = baseUrl.replaceAll('/api', '') + '/delete-account';
 
 }
 

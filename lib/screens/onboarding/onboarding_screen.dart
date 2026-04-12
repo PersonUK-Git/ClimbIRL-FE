@@ -116,33 +116,39 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         : cs.primary;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background Gradient
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 500),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  currentColor.withValues(alpha: 0.15),
-                  cs.surface,
-                ],
+      resizeToAvoidBottomInset: false,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Stack(
+          children: [
+            // Background Gradient
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 500),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    currentColor.withValues(alpha: 0.15),
+                    cs.surface,
+                  ],
+                ),
               ),
             ),
-          ),
-
-          PageView(
-            controller: _pageController,
-            onPageChanged: (index) => setState(() => _currentPage = index),
-            children: [
-              ..._introSlides.map((slide) => _buildIntroSlide(slide, cs)),
-              _buildIdentitySlide(cs),
-              _buildContactSlide(cs),
-              _buildHandleSlide(cs),
-            ],
-          ),
+  
+            PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                FocusScope.of(context).unfocus();
+                setState(() => _currentPage = index);
+              },
+              children: [
+                ..._introSlides.map((slide) => _buildIntroSlide(slide, cs)),
+                _buildIdentitySlide(cs),
+                _buildContactSlide(cs),
+                _buildHandleSlide(cs),
+              ],
+            ),
 
           // Bottom Controls
           Positioned(
@@ -242,7 +248,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: CircularProgressIndicator(),
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -356,32 +363,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ],
     );
   }
-
   Widget _buildFormSlide(ColorScheme cs, {required String title, required String subtitle, required List<Widget> children}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.outfit(
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              color: cs.onSurface,
-            ),
-          ).animate().fadeIn().slideX(begin: -0.1, end: 0),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: cs.onSurfaceVariant,
-            ),
-          ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.1, end: 0),
-          const SizedBox(height: 40),
-          ...children,
-        ],
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 100),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.outfit(
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
+                color: cs.onSurface,
+              ),
+            ).animate().fadeIn().slideX(begin: -0.1, end: 0),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
+            ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.1, end: 0),
+            const SizedBox(height: 40),
+            ...children,
+            const SizedBox(height: 120), // Extra space for keyboard and bottom controls
+          ],
+        ),
       ),
     );
   }
