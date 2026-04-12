@@ -118,12 +118,17 @@ class _LoginScreenState extends State<LoginScreen> {
       if (user != null) {
         // Success: Update AuthCubit and refresh data
         context.read<AuthCubit>().login(user);
+        context.read<OnboardingCubit>().completeOnboarding();
         
         context.read<ProfileCubit>().loadProfile();
         context.read<TaskCubit>().loadTasks();
         context.read<LeaderboardCubit>().loadLeaderboard();
         
-        // We don't need to pop, as app.dart will rebuild and show AppBottomNav
+        // If this screen was pushed from Onboarding, pop it.
+        // The root app home will now transition to AppBottomNav.
+        if (mounted && Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Invalid OTP. Please try again.')),
@@ -181,10 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           
           if (_isLoading)
-            Container(
-              color: Colors.black26,
-              child: const Center(child: CircularProgressIndicator()),
-            ),
+            const SizedBox.shrink(), // Removed full-screen loader overlay
         ],
       ),
     );
@@ -242,12 +244,44 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              'Send Verification Code',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            child: _isLoading 
+              ? const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                )
+              : const Text(
+                  'Send Verification Code',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
           ),
         ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
+        
+        if (!Navigator.canPop(context)) ...[
+          const SizedBox(height: 24),
+          Center(
+            child: TextButton(
+              onPressed: () {
+                context.read<OnboardingCubit>().resetOnboarding();
+              },
+              child: RichText(
+                text: TextSpan(
+                  style: TextStyle(color: cs.onSurfaceVariant, fontSize: 15),
+                  children: [
+                    const TextSpan(text: "Don't have an account? "),
+                    TextSpan(
+                      text: 'Create one',
+                      style: TextStyle(
+                        color: cs.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ).animate().fadeIn(delay: 400.ms),
+        ],
       ],
     );
   }
@@ -302,10 +336,16 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              'Verify & Login',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            child: _isLoading
+              ? const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                )
+              : const Text(
+                  'Verify & Login',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
           ),
         ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
         

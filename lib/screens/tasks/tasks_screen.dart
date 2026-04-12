@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../cubits/task/task_cubit.dart';
 import '../../cubits/task/task_state.dart';
 import '../../cubits/profile/profile_cubit.dart';
+import '../../cubits/leaderboard/leaderboard_cubit.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/task_model.dart';
 import '../../widgets/difficulty_chip.dart';
@@ -236,6 +237,10 @@ class _TaskCard extends StatelessWidget {
                 final updatedUser = await taskCubit.toggleTask(task.id);
                 if (updatedUser != null) {
                   profileCubit.updateFromUser(updatedUser);
+                  // Refresh leaderboard to reflect new XP/Rank
+                  if (context.mounted) {
+                    context.read<LeaderboardCubit>().loadLeaderboard();
+                  }
                 }
               },
               child: AnimatedContainer(

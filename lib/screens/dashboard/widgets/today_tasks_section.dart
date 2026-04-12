@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../cubits/task/task_cubit.dart';
 import '../../../cubits/task/task_state.dart';
 import '../../../cubits/profile/profile_cubit.dart';
+import '../../../cubits/leaderboard/leaderboard_cubit.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../widgets/difficulty_chip.dart';
 
@@ -98,6 +99,10 @@ class TodayTasksSection extends StatelessWidget {
                             final updatedUser = await taskCubit.toggleTask(task.id);
                             if (updatedUser != null) {
                               profileCubit.updateFromUser(updatedUser);
+                              // Refresh leaderboard to reflect new XP/Rank
+                              if (context.mounted) {
+                                context.read<LeaderboardCubit>().loadLeaderboard();
+                              }
                             }
                           },
                           child: AnimatedContainer(

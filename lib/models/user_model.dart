@@ -81,7 +81,7 @@ class UserModel extends Equatable {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['_id'] ?? json['id'] ?? '',
+      id: _parseId(json['_id'] ?? json['id']),
       name: json['name'] ?? '',
       username: json['username'] ?? '',
       avatarUrl: json['avatarUrl'] ?? '',
@@ -96,9 +96,56 @@ class UserModel extends Equatable {
       streakDays: _parseStreakDays(json['streakDays']),
       email: json['email'] ?? '',
       gender: json['gender'] ?? '',
-      dateOfBirth: json['dateOfBirth'] != null ? DateTime.parse(json['dateOfBirth']) : null,
+      dateOfBirth: _parseDate(json['dateOfBirth']),
       rank: json['rank'],
     );
+  }
+
+  static String _parseId(dynamic id) {
+    if (id is String) return id;
+    if (id is Map && id.containsKey('\$oid')) return id['\$oid'].toString();
+    return id?.toString() ?? '';
+  }
+
+  static DateTime? _parseDate(dynamic date) {
+    if (date == null) return null;
+    if (date is String) return DateTime.tryParse(date);
+    if (date is Map && date.containsKey('\$date')) {
+      final value = date['\$date'];
+      if (value is String) return DateTime.tryParse(value);
+      if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    return null;
+  }
+
+  static List<int> _parseWeeklyXP(dynamic json) {
+    if (json == null || json is! List || json.isEmpty) {
+      return const [0, 0, 0, 0, 0, 0, 0];
+    }
+    try {
+      final list = List<int>.from(json);
+      if (list.length < 7) {
+        return [...list, ...List.filled(7 - list.length, 0)];
+      }
+      return list.sublist(0, 7);
+    } catch (e) {
+      return const [0, 0, 0, 0, 0, 0, 0];
+    }
+  }
+
+  static List<bool> _parseStreakDays(dynamic json) {
+    if (json == null || json is! List || json.isEmpty) {
+      return const [false, false, false, false, false, false, false];
+    }
+    try {
+      final list = List<bool>.from(json);
+      if (list.length < 7) {
+        return [...list, ...List.filled(7 - list.length, false)];
+      }
+      return list.sublist(0, 7);
+    } catch (e) {
+      return const [false, false, false, false, false, false, false];
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -143,26 +190,4 @@ class UserModel extends Equatable {
         dateOfBirth,
         rank,
       ];
-
-  static List<int> _parseWeeklyXP(dynamic json) {
-    if (json == null || json is! List || json.isEmpty) {
-      return const [0, 0, 0, 0, 0, 0, 0];
-    }
-    final list = List<int>.from(json);
-    if (list.length < 7) {
-      return [...list, ...List.filled(7 - list.length, 0)];
-    }
-    return list.sublist(0, 7);
-  }
-
-  static List<bool> _parseStreakDays(dynamic json) {
-    if (json == null || json is! List || json.isEmpty) {
-      return const [false, false, false, false, false, false, false];
-    }
-    final list = List<bool>.from(json);
-    if (list.length < 7) {
-      return [...list, ...List.filled(7 - list.length, false)];
-    }
-    return list.sublist(0, 7);
-  }
 }

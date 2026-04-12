@@ -105,12 +105,12 @@ class _AppView extends StatelessWidget {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
+    } else if (authState is AuthAuthenticated) {
+      return const AppBottomNav();
     } else if (onboardingState is! OnboardingCompleted) {
       return const OnboardingScreen();
-    } else if (authState is! AuthAuthenticated) {
-      return const LoginScreen();
     } else {
-      return const AppBottomNav();
+      return const LoginScreen();
     }
   }
 }
