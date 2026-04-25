@@ -10,6 +10,9 @@ import '../../models/task_model.dart';
 import '../../widgets/difficulty_chip.dart';
 import 'widgets/add_task_sheet.dart';
 import 'widgets/task_card_skeleton.dart';
+import 'package:flutter/services.dart';
+import '../../cubits/profile/profile_state.dart';
+import '../../core/ads/ad_manager.dart';
 
 
 class TasksScreen extends StatelessWidget {
@@ -39,10 +42,48 @@ class TasksScreen extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    FloatingActionButton.small(
-                      heroTag: 'add_task',
-                      onPressed: () => _showAddTaskSheet(context),
-                      child: const Icon(Icons.add_rounded),
+                    Row(
+                      children: [
+                        BlocBuilder<ProfileCubit, ProfileState>(
+                          builder: (context, profileState) {
+                            final rerolls = profileState.user.rerollsRemaining;
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: cs.primaryContainer.withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.refresh_rounded,
+                                    size: 14,
+                                    color: cs.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    rerolls > 0 ? 'Rerolls: $rerolls/2' : 'Watch Ad to Reroll',
+                                    style: tt.labelSmall?.copyWith(
+                                      color: cs.primary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        FloatingActionButton.small(
+                          heroTag: 'add_task',
+                          onPressed: () => _showAddTaskSheet(context),
+                          child: const Icon(Icons.add_rounded),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -187,7 +228,6 @@ class TasksScreen extends StatelessWidget {
     );
   }
 }
-
 class _TaskCard extends StatelessWidget {
   final TaskModel task;
 
@@ -200,7 +240,7 @@ class _TaskCard extends StatelessWidget {
 
     return Dismissible(
       key: Key(task.id),
-      direction: DismissDirection.endToStart,
+      direction: task.isCompleted ? DismissDirection.none : DismissDirection.endToStart,
       background: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.only(right: 20),
@@ -307,6 +347,79 @@ class _TaskCard extends StatelessWidget {
               ),
             ),
             DifficultyChip(difficulty: task.difficulty),
+            if (!task.isCompleted) ...[
+              const SizedBox(width: 8),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                icon: Icon(
+                  Icons.refresh_rounded,
+                  size: 20,
+                  color: cs.primary.withValues(alpha: 0.7),
+                ),
+                onPressed: () async {
+                  HapticFeedback.mediumImpact();
+                  final taskCubit = context.read<TaskCubit>();
+                  final profileCubit = context.read<ProfileCubit>();
+                  final rerolls = profileCubit.state.user.rerollsRemaining;
+
+                  bool watchAd = rerolls <= 0;
+
+                  if (watchAd) {
+                    final proceed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('No Rerolls Left'),
+                        content: const Text('Watch a rewarded ad to reroll this task?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Watch Ad'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (proceed != true) return;
+
+                    // Show loading
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Loading Ad...'), duration: Duration(seconds: 1)),
+                    );
+
+                    final success = await AdManager.instance.showRewardedAd(
+                      onRewardEarned: () {}, // Success tracked by backend
+                    );
+
+                    if (!success) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Ad failed to load. Please try again.')),
+                      );
+                      return;
+                    }
+                  }
+
+                  final updatedUser = await taskCubit.rerollTask(task.id, watchAd: watchAd);
+                  if (updatedUser != null) {
+                    profileCubit.updateFromUser(updatedUser);
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Failed to reroll task'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+            ],
           ],
         ),
       ),

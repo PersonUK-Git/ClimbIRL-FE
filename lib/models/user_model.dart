@@ -18,6 +18,7 @@ class UserModel extends Equatable {
   final String gender;
   final DateTime? dateOfBirth;
   final int? rank; // New field for leaderboard rank
+  final int rerollsRemaining;
 
   const UserModel({
     required this.id,
@@ -37,6 +38,7 @@ class UserModel extends Equatable {
     this.gender = '',
     this.dateOfBirth,
     this.rank,
+    this.rerollsRemaining = 3,
   });
 
   UserModel copyWith({
@@ -57,6 +59,7 @@ class UserModel extends Equatable {
     String? gender,
     DateTime? dateOfBirth,
     int? rank,
+    int? rerollsRemaining,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -76,6 +79,7 @@ class UserModel extends Equatable {
       gender: gender ?? this.gender,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       rank: rank ?? this.rank,
+      rerollsRemaining: rerollsRemaining ?? this.rerollsRemaining,
     );
   }
 
@@ -98,6 +102,7 @@ class UserModel extends Equatable {
       gender: json['gender'] ?? '',
       dateOfBirth: _parseDate(json['dateOfBirth']),
       rank: json['rank'],
+      rerollsRemaining: json['rerollsRemaining'] ?? 3,
     );
   }
 
@@ -167,6 +172,7 @@ class UserModel extends Equatable {
       'gender': gender,
       'dateOfBirth': dateOfBirth?.toIso8601String(),
       'rank': rank,
+      'rerollsRemaining': rerollsRemaining,
     };
   }
 
@@ -189,5 +195,6 @@ class UserModel extends Equatable {
         gender,
         dateOfBirth,
         rank,
+        rerollsRemaining,
       ];
 }

@@ -129,6 +129,11 @@ class _LifecycleRefreshManagerState extends State<_LifecycleRefreshManager> with
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    
+    // Initial refresh if already authenticated
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshData();
+    });
   }
 
   @override
@@ -149,7 +154,7 @@ class _LifecycleRefreshManagerState extends State<_LifecycleRefreshManager> with
     if (authState is AuthAuthenticated) {
       context.read<TaskCubit>().loadTasks();
       context.read<ProfileCubit>().loadProfile();
-      context.read<LeaderboardCubit>().loadLeaderboard();
+      context.read<LeaderboardCubit>().loadLeaderboard(userId: authState.user.id);
     }
   }
 

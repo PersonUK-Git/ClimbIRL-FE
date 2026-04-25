@@ -14,7 +14,7 @@ class LeaderboardState extends Equatable {
   const LeaderboardState({
     this.entries = const [],
     this.period = LeaderboardPeriod.weekly,
-    this.currentUserId = 'user_001',
+    this.currentUserId = '',
     this.status = LeaderboardStatus.initial,
     this.errorMessage,
   });
