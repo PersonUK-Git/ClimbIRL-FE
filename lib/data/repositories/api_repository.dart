@@ -35,6 +35,7 @@ class ApiRepository {
   Map<String, String> _getHeaders(String? token) {
     return {
       'Content-Type': 'application/json',
+      'x-timezone-offset': DateTime.now().timeZoneOffset.inMinutes.toString(),
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
@@ -230,6 +231,31 @@ class ApiRepository {
       }
     } catch (e) {
       _logger.e('Error completing task', error: e);
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> rerollTask(String taskId, {bool watchAd = false}) async {
+    try {
+      final token = await getToken();
+      final response = await http.patch(
+        Uri.parse('${ApiConstants.tasks}/$taskId/reroll'),
+        headers: _getHeaders(token),
+        body: jsonEncode({'watchAd': watchAd}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'task': TaskModel.fromJson(data['task']),
+          'user': UserModel.fromJson(data['user']),
+        };
+      } else {
+        _logger.e('Failed to reroll task: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      _logger.e('Error rerolling task', error: e);
       return null;
     }
   }

@@ -1,11 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'app.dart';
 import 'core/utils/update_service.dart';
+import 'core/ads/ad_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Initialize Mobile Ads SDK
+  final initStatus = MobileAds.instance.initialize();
+  
+  // Register this device as a test device to avoid "No Fill" errors during development
+  MobileAds.instance.updateRequestConfiguration(
+    RequestConfiguration(testDeviceIds: ['098B5E17F004EDFEDF3AAC1AF91FDF17']),
+  );
+  
+  // Preload rewarded ad
+  initStatus.then((_) => AdManager.instance.loadRewardedAd());
+
   // Check for updates on Google Play (Android only)
   UpdateService.checkForUpdate();
   

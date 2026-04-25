@@ -59,7 +59,23 @@ class TaskCubit extends Cubit<TaskState> {
     }
   }
 
+  Future<UserModel?> rerollTask(String taskId, {bool watchAd = false}) async {
+    final result = await repository.rerollTask(taskId, watchAd: watchAd);
+    if (result != null) {
+      final newTask = result['task'] as TaskModel;
+      final updatedUser = result['user'] as UserModel;
+
+      final tasks = state.tasks.map((t) => t.id == taskId ? newTask : t).toList();
+      emit(state.copyWith(tasks: tasks));
+      return updatedUser;
+    }
+    return null;
+  }
+
   Future<void> removeTask(String taskId) async {
+    final task = state.tasks.firstWhere((t) => t.id == taskId);
+    if (task.isCompleted) return;
+
     final success = await repository.deleteTask(taskId);
     if (success) {
       final tasks = state.tasks.where((t) => t.id != taskId).toList();
