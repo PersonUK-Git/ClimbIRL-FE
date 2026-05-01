@@ -1,5 +1,6 @@
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:io';
+import 'dart:async';
 
 class AdManager {
   AdManager._();
@@ -42,33 +43,39 @@ class AdManager {
 
   Future<bool> showRewardedAd({required Function() onRewardEarned}) async {
     if (_rewardedAd == null) {
-      // Try loading for next time but return false for now
       await loadRewardedAd();
       return false;
     }
 
+    final completer = Completer<bool>();
     bool earned = false;
     
     _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
+        print('[AdManager] Ad dismissed');
         ad.dispose();
         _rewardedAd = null;
-        loadRewardedAd(); // Load the next one
+        loadRewardedAd(); 
+        if (!completer.isCompleted) completer.complete(earned);
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
+        print('[AdManager] Ad failed to show: $error');
         ad.dispose();
         _rewardedAd = null;
         loadRewardedAd();
+        if (!completer.isCompleted) completer.complete(false);
       },
     );
 
+    print('[AdManager] Showing ad...');
     await _rewardedAd!.show(
       onUserEarnedReward: (ad, reward) {
+        print('[AdManager] Reward earned!');
         earned = true;
         onRewardEarned();
       },
     );
 
-    return earned;
+    return completer.future;
   }
 }

@@ -6,9 +6,11 @@ import '../../../cubits/profile/profile_cubit.dart';
 import '../../../cubits/leaderboard/leaderboard_cubit.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../widgets/difficulty_chip.dart';
+import '../../tasks/widgets/verification_sheet.dart';
 
 class TodayTasksSection extends StatelessWidget {
-  const TodayTasksSection({super.key});
+  final VoidCallback onCompleted;
+  const TodayTasksSection({super.key, required this.onCompleted});
 
   @override
   Widget build(BuildContext context) {
@@ -92,16 +94,31 @@ class TodayTasksSection extends StatelessWidget {
                       children: [
                         // Checkbox
                         GestureDetector(
-                          onTap: () async {
-                            final taskCubit = context.read<TaskCubit>();
-                            final profileCubit = context.read<ProfileCubit>();
-                            
-                            final updatedUser = await taskCubit.toggleTask(task.id);
-                            if (updatedUser != null) {
-                              profileCubit.updateFromUser(updatedUser);
-                              // Refresh leaderboard to reflect new XP/Rank
+                          onTap: task.isCompleted ? null : () async {
+                            final result = await showModalBottomSheet<bool>(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => MultiBlocProvider(
+                                providers: [
+                                  BlocProvider.value(value: context.read<TaskCubit>()),
+                                  BlocProvider.value(value: context.read<ProfileCubit>()),
+                                  BlocProvider.value(value: context.read<LeaderboardCubit>()),
+                                ],
+                                child: VerificationSheet(task: task),
+                              ),
+                            );
+
+                            if (result == true) {
+                              onCompleted();
                               if (context.mounted) {
-                                context.read<LeaderboardCubit>().loadLeaderboard();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Great job! XP rewarded.'),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: AppColors.success,
+                                  ),
+                                );
                               }
                             }
                           },

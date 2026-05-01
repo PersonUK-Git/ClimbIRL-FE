@@ -1,12 +1,12 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const String _devBaseUrl = 'http://192.168.1.68:5000/api';
+  static const String _devBaseUrl = 'http://192.168.0.229:5000/api';
   static const String _prodBaseUrl = 'https://api.climbirl.trackittoo.com/api';
 
   // Toggle this to switch between environments
-  static const bool _isProd = true;
-  // static const bool _isProd = false;
+  // static const bool _isProd = true;
+  static const bool _isProd = false;
   static const String baseUrl = _isProd ? _prodBaseUrl : _devBaseUrl;
 
   // Auth endpoints
@@ -17,6 +17,7 @@ class ApiConstants {
   // Task endpoints
   static const String tasks = '$baseUrl/tasks';
   static String completeTask(String id) => '$tasks/$id/complete';
+  static String verifyTask(String id) => '$tasks/$id/verify';
 
   // User endpoints
   static const String profile = '$baseUrl/users/profile';

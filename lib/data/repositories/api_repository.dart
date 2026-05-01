@@ -225,13 +225,42 @@ class ApiRepository {
         final data = jsonDecode(response.body);
         // The backend returns { task, user }
         return UserModel.fromJson(data['user']);
-      } else {
-        _logger.e('Failed to complete task: ${response.body}');
-        return null;
       }
     } catch (e) {
       _logger.e('Error completing task', error: e);
       return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> verifyTask({
+    required String taskId,
+    String? imageBase64,
+    String? proofNote,
+  }) async {
+    try {
+      final token = await getToken();
+      final response = await http.post(
+        Uri.parse(ApiConstants.verifyTask(taskId)),
+        headers: _getHeaders(token),
+        body: jsonEncode({
+          if (imageBase64 != null) 'imageBase64': imageBase64,
+          if (proofNote != null) 'proofNote': proofNote,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'task': TaskModel.fromJson(data['task']),
+          'user': UserModel.fromJson(data['user']),
+        };
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(data['reason'] ?? data['message'] ?? 'Verification failed');
+      }
+    } catch (e) {
+      _logger.e('Error verifying task', error: e);
+      rethrow;
     }
   }
 

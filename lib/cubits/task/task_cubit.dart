@@ -9,13 +9,17 @@ class TaskCubit extends Cubit<TaskState> {
 
   TaskCubit({required this.repository}) : super(const TaskState());
 
-  Future<void> loadTasks() async {
-    emit(state.copyWith(status: TaskStatus.loading));
+  Future<void> loadTasks({bool silent = false}) async {
+    if (!silent || state.status != TaskStatus.success) {
+      emit(state.copyWith(status: TaskStatus.loading));
+    }
     try {
       final tasks = await repository.getTasks();
       emit(state.copyWith(tasks: tasks, status: TaskStatus.success));
     } catch (e) {
-      emit(state.copyWith(status: TaskStatus.failure, errorMessage: e.toString()));
+      if (!silent) {
+        emit(state.copyWith(status: TaskStatus.failure, errorMessage: e.toString()));
+      }
     }
   }
 
@@ -51,6 +55,33 @@ class TaskCubit extends Cubit<TaskState> {
     return updatedUser;
   }
 
+  /// Verify task with AI proof. Returns the updated User model if successful.
+  Future<UserModel?> verifyTask({
+    required String taskId,
+    String? imageBase64,
+    String? proofNote,
+  }) async {
+    try {
+      final result = await repository.verifyTask(
+        taskId: taskId,
+        imageBase64: imageBase64,
+        proofNote: proofNote,
+      );
+
+      if (result != null) {
+        final updatedTask = result['task'] as TaskModel;
+        final updatedUser = result['user'] as UserModel;
+
+        final updatedTasks = state.tasks.map((t) => t.id == taskId ? updatedTask : t).toList();
+        emit(state.copyWith(tasks: updatedTasks));
+        return updatedUser;
+      }
+      return null;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> addTask(TaskModel task) async {
     final newTask = await repository.createTask(task);
     if (newTask != null) {
@@ -60,16 +91,26 @@ class TaskCubit extends Cubit<TaskState> {
   }
 
   Future<UserModel?> rerollTask(String taskId, {bool watchAd = false}) async {
-    final result = await repository.rerollTask(taskId, watchAd: watchAd);
-    if (result != null) {
-      final newTask = result['task'] as TaskModel;
-      final updatedUser = result['user'] as UserModel;
-
-      final tasks = state.tasks.map((t) => t.id == taskId ? newTask : t).toList();
-      emit(state.copyWith(tasks: tasks));
-      return updatedUser;
+    print('[Reroll] Starting reroll for task: $taskId (watchAd: $watchAd)');
+    emit(state.copyWith(status: TaskStatus.loading));
+    try {
+      final result = await repository.rerollTask(taskId, watchAd: watchAd);
+      if (result != null) {
+        print('[Reroll] Backend success. Reloading all tasks...');
+        final updatedUser = result['user'] as UserModel;
+        final tasks = await repository.getTasks();
+        print('[Reroll] Fetched ${tasks.length} tasks. New titles: ${tasks.map((t) => t.title).toList()}');
+        emit(state.copyWith(tasks: tasks, status: TaskStatus.success));
+        return updatedUser;
+      }
+      print('[Reroll] Backend returned null result');
+      emit(state.copyWith(status: TaskStatus.success));
+      return null;
+    } catch (e) {
+      print('[Reroll] Error: $e');
+      emit(state.copyWith(status: TaskStatus.failure, errorMessage: e.toString()));
+      return null;
     }
-    return null;
   }
 
   Future<void> removeTask(String taskId) async {

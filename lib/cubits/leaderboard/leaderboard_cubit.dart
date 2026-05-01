@@ -8,11 +8,13 @@ class LeaderboardCubit extends Cubit<LeaderboardState> {
 
   LeaderboardCubit({required this.repository}) : super(const LeaderboardState());
 
-  Future<void> loadLeaderboard({String? userId}) async {
-    emit(state.copyWith(
-      status: LeaderboardStatus.loading,
-      currentUserId: userId,
-    ));
+  Future<void> loadLeaderboard({String? userId, bool silent = false}) async {
+    if (!silent || state.status != LeaderboardStatus.success) {
+      emit(state.copyWith(
+        status: LeaderboardStatus.loading,
+        currentUserId: userId ?? state.currentUserId,
+      ));
+    }
     
     try {
       // Map period enum to string for API
@@ -42,7 +44,9 @@ class LeaderboardCubit extends Cubit<LeaderboardState> {
         status: LeaderboardStatus.success,
       ));
     } catch (e) {
-      emit(state.copyWith(status: LeaderboardStatus.failure, errorMessage: e.toString()));
+      if (!silent) {
+        emit(state.copyWith(status: LeaderboardStatus.failure, errorMessage: e.toString()));
+      }
     }
   }
 
