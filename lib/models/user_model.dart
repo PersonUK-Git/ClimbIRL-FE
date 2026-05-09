@@ -20,6 +20,8 @@ class UserModel extends Equatable {
   final int? rank; // New field for leaderboard rank
   final int rerollsRemaining;
   final Map<String, int> tokens;
+  final String? fcmToken;
+  final String notificationTime;
 
   const UserModel({
     required this.id,
@@ -41,6 +43,8 @@ class UserModel extends Equatable {
     this.rank,
     this.rerollsRemaining = 3,
     this.tokens = const {'easy': 1, 'medium': 1, 'hard': 1, 'epic': 1},
+    this.fcmToken,
+    this.notificationTime = '08:00',
   });
 
   UserModel copyWith({
@@ -63,6 +67,8 @@ class UserModel extends Equatable {
     int? rank,
     int? rerollsRemaining,
     Map<String, int>? tokens,
+    String? fcmToken,
+    String? notificationTime,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -84,6 +90,8 @@ class UserModel extends Equatable {
       rank: rank ?? this.rank,
       rerollsRemaining: rerollsRemaining ?? this.rerollsRemaining,
       tokens: tokens ?? this.tokens,
+      fcmToken: fcmToken ?? this.fcmToken,
+      notificationTime: notificationTime ?? this.notificationTime,
     );
   }
 
@@ -108,6 +116,8 @@ class UserModel extends Equatable {
       rank: json['rank'],
       rerollsRemaining: json['rerollsRemaining'] ?? 3,
       tokens: _parseTokens(json['tokens']),
+      fcmToken: json['fcmToken'],
+      notificationTime: json['notificationTime'] ?? '08:00',
     );
   }
 
@@ -190,6 +200,8 @@ class UserModel extends Equatable {
       'rank': rank,
       'rerollsRemaining': rerollsRemaining,
       'tokens': tokens,
+      'fcmToken': fcmToken,
+      'notificationTime': notificationTime,
     };
   }
 
@@ -214,5 +226,7 @@ class UserModel extends Equatable {
         rank,
         rerollsRemaining,
         tokens,
+        fcmToken,
+        notificationTime,
       ];
 }
