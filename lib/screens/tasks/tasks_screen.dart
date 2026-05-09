@@ -17,6 +17,7 @@ import 'widgets/add_task_sheet.dart';
 import 'widgets/task_card_skeleton.dart';
 import '../../core/ads/ad_manager.dart';
 import 'widgets/verification_sheet.dart';
+import 'widgets/milestone_card.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -27,17 +28,40 @@ class TasksScreen extends StatefulWidget {
 
 class _TasksScreenState extends State<TasksScreen> {
   late ConfettiController _confettiController;
+  late ScrollController _scrollController;
+  bool _showMilestones = true;
 
   @override
   void initState() {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 2));
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _confettiController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    final currentOffset = _scrollController.offset;
+    
+    if (currentOffset > 20) {
+      if (_showMilestones) {
+        setState(() {
+          _showMilestones = false;
+        });
+      }
+    } else if (currentOffset <= 20) {
+      if (!_showMilestones) {
+        setState(() {
+          _showMilestones = true;
+        });
+      }
+    }
   }
 
   void _celebrate() {
@@ -178,11 +202,47 @@ class _TasksScreenState extends State<TasksScreen> {
 
                   const SizedBox(height: 16),
 
+                  // Milestone Section
+                  BlocBuilder<ProfileCubit, ProfileState>(
+                    builder: (context, profileState) {
+                      return MilestoneCard(
+                        user: profileState.user,
+                        milestones: profileState.milestones,
+                        showRoadmap: _showMilestones,
+                        onWatchAd: () async {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Loading Ad...'), duration: Duration(seconds: 1)),
+                          );
+
+                          final success = await AdManager.instance.showRewardedAd(
+                            onRewardEarned: () async {
+                              final profileCubit = context.read<ProfileCubit>();
+                              final reward = await profileCubit.recordMilestoneAd();
+                              if (reward != null && context.mounted) {
+                                _showRewardModal(context, reward);
+                              }
+                            },
+                          );
+
+                          if (!success) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Ad failed to load. Please try again.')),
+                            );
+                          }
+                        },
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
                   // Task List
                   Expanded(
                     child: state.status == TaskStatus.loading ||
                             state.status == TaskStatus.initial
                         ? ListView.builder(
+                            controller: _scrollController,
                             padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                             itemCount: 5,
                             itemBuilder: (context, index) =>
@@ -218,6 +278,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                 ),
                               )
                             : ListView.builder(
+                                controller: _scrollController,
                                 key: ValueKey(state.tasks.length.toString() + state.tasks.hashCode.toString()),
                                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                                 itemCount: state.filteredTasks.length,
@@ -269,6 +330,87 @@ class _TasksScreenState extends State<TasksScreen> {
           ),
         );
       },
+    );
+  }
+
+  void _showRewardModal(BuildContext context, String rewardType) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    String assetPath = 'assets/token_easy.png';
+    if (rewardType == 'medium') assetPath = 'assets/token_medium.png';
+    if (rewardType == 'hard') assetPath = 'assets/token_hard.png';
+    if (rewardType == 'epic') assetPath = 'assets/token_epic.png';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Theme.of(context).cardTheme.color,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Token Earned!',
+                style: tt.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: cs.primary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Image.asset(
+                assetPath,
+                width: 100,
+                height: 100,
+                errorBuilder: (context, error, stackTrace) => Icon(
+                  Icons.stars_rounded,
+                  size: 100,
+                  color: cs.primary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'You earned a ${rewardType.toUpperCase()} token!',
+                style: tt.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Keep watching ads to earn more rewards.',
+                style: tt.bodySmall?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Claim Token',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
