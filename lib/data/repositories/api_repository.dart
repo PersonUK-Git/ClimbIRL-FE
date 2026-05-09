@@ -192,7 +192,7 @@ class ApiRepository {
     }
   }
 
-  Future<TaskModel?> createTask(TaskModel task) async {
+  Future<Map<String, dynamic>?> createTask(TaskModel task) async {
     try {
       final token = await getToken();
       final response = await http.post(
@@ -202,10 +202,14 @@ class ApiRepository {
       );
 
       if (response.statusCode == 201) {
-        return TaskModel.fromJson(jsonDecode(response.body));
+        final data = jsonDecode(response.body);
+        return {
+          'task': TaskModel.fromJson(data['task']),
+          'user': UserModel.fromJson(data['user']),
+        };
       } else {
-        _logger.e('Failed to create task: ${response.body}');
-        return null;
+        final data = jsonDecode(response.body);
+        throw Exception(data['message'] ?? 'Failed to create task');
       }
     } catch (e) {
       _logger.e('Error creating task', error: e);

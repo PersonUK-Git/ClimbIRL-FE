@@ -1,7 +1,7 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const String _devBaseUrl = 'http://192.168.0.229:5000/api';
+  static const String _devBaseUrl = 'http://192.168.1.68:5000/api';
   static const String _prodBaseUrl = 'https://api.climbirl.trackittoo.com/api';
 
   // Toggle this to switch between environments

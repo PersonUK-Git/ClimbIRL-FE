@@ -276,8 +276,11 @@ class _TasksScreenState extends State<TasksScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => BlocProvider.value(
-        value: context.read<TaskCubit>(),
+      builder: (_) => MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: context.read<TaskCubit>()),
+          BlocProvider.value(value: context.read<ProfileCubit>()),
+        ],
         child: const AddTaskSheet(),
       ),
     );
