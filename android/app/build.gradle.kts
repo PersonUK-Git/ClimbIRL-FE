@@ -24,7 +24,7 @@ android {
         // Application ID is now handled by product flavors
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = 4
+        versionCode = 5
         versionName = "1.0.0"
     }
 

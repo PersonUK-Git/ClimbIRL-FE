@@ -82,11 +82,21 @@ class TaskCubit extends Cubit<TaskState> {
     }
   }
 
-  Future<void> addTask(TaskModel task) async {
-    final newTask = await repository.createTask(task);
-    if (newTask != null) {
-      final tasks = [...state.tasks, newTask];
-      emit(state.copyWith(tasks: tasks));
+  Future<UserModel?> addTask(TaskModel task) async {
+    try {
+      final result = await repository.createTask(task);
+      if (result != null) {
+        final updatedTask = result['task'] as TaskModel;
+        final updatedUser = result['user'] as UserModel;
+
+        final tasks = [...state.tasks, updatedTask];
+        emit(state.copyWith(tasks: tasks));
+        return updatedUser;
+      }
+      return null;
+    } catch (e) {
+      emit(state.copyWith(status: TaskStatus.failure, errorMessage: e.toString()));
+      rethrow;
     }
   }
 

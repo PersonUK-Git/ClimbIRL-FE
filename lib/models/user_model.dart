@@ -19,6 +19,7 @@ class UserModel extends Equatable {
   final DateTime? dateOfBirth;
   final int? rank; // New field for leaderboard rank
   final int rerollsRemaining;
+  final Map<String, int> tokens;
 
   const UserModel({
     required this.id,
@@ -39,6 +40,7 @@ class UserModel extends Equatable {
     this.dateOfBirth,
     this.rank,
     this.rerollsRemaining = 3,
+    this.tokens = const {'easy': 1, 'medium': 1, 'hard': 1, 'epic': 1},
   });
 
   UserModel copyWith({
@@ -60,6 +62,7 @@ class UserModel extends Equatable {
     DateTime? dateOfBirth,
     int? rank,
     int? rerollsRemaining,
+    Map<String, int>? tokens,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -80,6 +83,7 @@ class UserModel extends Equatable {
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       rank: rank ?? this.rank,
       rerollsRemaining: rerollsRemaining ?? this.rerollsRemaining,
+      tokens: tokens ?? this.tokens,
     );
   }
 
@@ -103,6 +107,7 @@ class UserModel extends Equatable {
       dateOfBirth: _parseDate(json['dateOfBirth']),
       rank: json['rank'],
       rerollsRemaining: json['rerollsRemaining'] ?? 3,
+      tokens: _parseTokens(json['tokens']),
     );
   }
 
@@ -153,6 +158,17 @@ class UserModel extends Equatable {
     }
   }
 
+  static Map<String, int> _parseTokens(dynamic json) {
+    if (json == null || json is! Map) {
+      return const {'easy': 1, 'medium': 1, 'hard': 1, 'epic': 1};
+    }
+    try {
+      return Map<String, int>.from(json);
+    } catch (e) {
+      return const {'easy': 1, 'medium': 1, 'hard': 1, 'epic': 1};
+    }
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -173,6 +189,7 @@ class UserModel extends Equatable {
       'dateOfBirth': dateOfBirth?.toIso8601String(),
       'rank': rank,
       'rerollsRemaining': rerollsRemaining,
+      'tokens': tokens,
     };
   }
 
@@ -196,5 +213,6 @@ class UserModel extends Equatable {
         dateOfBirth,
         rank,
         rerollsRemaining,
+        tokens,
       ];
 }
