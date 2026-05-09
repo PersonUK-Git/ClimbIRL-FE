@@ -22,6 +22,8 @@ class UserModel extends Equatable {
   final Map<String, int> tokens;
   final String? fcmToken;
   final String notificationTime;
+  final int adsWatchedThisMonth;
+  final DateTime? lastMilestoneReset;
 
   const UserModel({
     required this.id,
@@ -45,6 +47,8 @@ class UserModel extends Equatable {
     this.tokens = const {'easy': 1, 'medium': 1, 'hard': 1, 'epic': 1},
     this.fcmToken,
     this.notificationTime = '08:00',
+    this.adsWatchedThisMonth = 0,
+    this.lastMilestoneReset,
   });
 
   UserModel copyWith({
@@ -69,6 +73,8 @@ class UserModel extends Equatable {
     Map<String, int>? tokens,
     String? fcmToken,
     String? notificationTime,
+    int? adsWatchedThisMonth,
+    DateTime? lastMilestoneReset,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -92,6 +98,8 @@ class UserModel extends Equatable {
       tokens: tokens ?? this.tokens,
       fcmToken: fcmToken ?? this.fcmToken,
       notificationTime: notificationTime ?? this.notificationTime,
+      adsWatchedThisMonth: adsWatchedThisMonth ?? this.adsWatchedThisMonth,
+      lastMilestoneReset: lastMilestoneReset ?? this.lastMilestoneReset,
     );
   }
 
@@ -118,6 +126,8 @@ class UserModel extends Equatable {
       tokens: _parseTokens(json['tokens']),
       fcmToken: json['fcmToken'],
       notificationTime: json['notificationTime'] ?? '08:00',
+      adsWatchedThisMonth: json['adsWatchedThisMonth'] ?? 0,
+      lastMilestoneReset: _parseDate(json['lastMilestoneReset']),
     );
   }
 
@@ -202,6 +212,8 @@ class UserModel extends Equatable {
       'tokens': tokens,
       'fcmToken': fcmToken,
       'notificationTime': notificationTime,
+      'adsWatchedThisMonth': adsWatchedThisMonth,
+      'lastMilestoneReset': lastMilestoneReset?.toIso8601String(),
     };
   }
 
@@ -228,5 +240,7 @@ class UserModel extends Equatable {
         tokens,
         fcmToken,
         notificationTime,
+        adsWatchedThisMonth,
+        lastMilestoneReset,
       ];
 }

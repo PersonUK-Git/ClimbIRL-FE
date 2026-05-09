@@ -19,11 +19,13 @@ class ProfileCubit extends Cubit<ProfileState> {
     try {
       final user = await repository.getProfile();
       final achievements = await repository.getAchievements();
+      final milestones = await repository.getMilestones();
       
       if (user != null) {
         emit(state.copyWith(
           user: user, 
           achievements: achievements,
+          milestones: milestones,
           status: ProfileStatus.success,
         ));
       } else if (!silent) {
@@ -55,6 +57,15 @@ class ProfileCubit extends Cubit<ProfileState> {
       return true;
     }
     return false;
+  }
+
+  Future<String?> recordMilestoneAd() async {
+    final result = await repository.recordMilestoneAd();
+    if (result != null) {
+      emit(state.copyWith(user: result['user']));
+      return result['rewardEarned']; 
+    }
+    return null;
   }
 
   Future<bool> register(UserModel newUser) async {

@@ -170,6 +170,50 @@ class ApiRepository {
     }
   }
 
+  Future<Map<String, dynamic>?> recordMilestoneAd() async {
+    try {
+      final token = await getToken();
+      final response = await http.post(
+        Uri.parse('${ApiConstants.profile}/milestone/ad'),
+        headers: _getHeaders(token),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'user': UserModel.fromJson(data['user']),
+          'rewardEarned': data['rewardEarned'],
+        };
+      } else {
+        _logger.e('Failed to record milestone ad: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      _logger.e('Error recording milestone ad', error: e);
+      return null;
+    }
+  }
+
+  Future<List<dynamic>> getMilestones() async {
+    try {
+      final token = await getToken();
+      final response = await http.get(
+        Uri.parse(ApiConstants.milestones),
+        headers: _getHeaders(token),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      } else {
+        _logger.e('Failed to fetch milestones: ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      _logger.e('Error fetching milestones', error: e);
+      return [];
+    }
+  }
+
   // Task Methods
   Future<List<TaskModel>> getTasks() async {
     try {

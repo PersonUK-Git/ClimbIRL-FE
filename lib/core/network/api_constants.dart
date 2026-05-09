@@ -21,6 +21,7 @@ class ApiConstants {
 
   // User endpoints
   static const String profile = '$baseUrl/users/profile';
+  static const String milestones = '$baseUrl/users/milestones';
 
   // Leaderboard endpoints
   static const String leaderboard = '$baseUrl/leaderboard';
