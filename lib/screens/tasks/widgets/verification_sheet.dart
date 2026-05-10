@@ -216,7 +216,7 @@ class _VerificationSheetState extends State<VerificationSheet> {
           if (_isVerifying) ...[
              const SizedBox(height: 16),
              Text(
-               'Gemini is judging your work...',
+               'Please wait while we verify your work...',
                style: tt.labelMedium?.copyWith(
                  color: cs.primary,
                  fontStyle: FontStyle.italic
