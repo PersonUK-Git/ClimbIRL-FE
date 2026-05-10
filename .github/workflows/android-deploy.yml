@@ -48,6 +48,6 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAYSTORE_ACCOUNT_KEY }}
           packageName: com.trackittoo.climbirl
           releaseFiles: build/app/outputs/bundle/prodRelease/app-prod-release.aab
-          track: closed
+          track: alpha
           status: completed
           whatsNewDirectory: distribution/whatsnew
