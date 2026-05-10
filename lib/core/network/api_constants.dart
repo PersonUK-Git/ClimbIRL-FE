@@ -5,8 +5,8 @@ class ApiConstants {
   static const String _prodBaseUrl = 'https://api.climbirl.trackittoo.com/api';
 
   // Toggle this to switch between environments
-  // static const bool _isProd = true;
-  static const bool _isProd = false;
+  static const bool _isProd = true;
+  // static const bool _isProd = false;
   static const String baseUrl = _isProd ? _prodBaseUrl : _devBaseUrl;
 
   // Auth endpoints
