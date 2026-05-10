@@ -152,9 +152,9 @@ class _LifecycleRefreshManagerState extends State<_LifecycleRefreshManager> with
   void _refreshData() {
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthAuthenticated) {
-      context.read<TaskCubit>().loadTasks();
-      context.read<ProfileCubit>().loadProfile();
-      context.read<LeaderboardCubit>().loadLeaderboard(userId: authState.user.id);
+      context.read<TaskCubit>().loadTasks(silent: true);
+      context.read<ProfileCubit>().loadProfile(silent: true);
+      context.read<LeaderboardCubit>().loadLeaderboard(userId: authState.user.id, silent: true);
     }
   }
 

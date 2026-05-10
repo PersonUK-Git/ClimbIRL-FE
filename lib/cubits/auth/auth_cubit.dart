@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/api_repository.dart';
 import '../../models/user_model.dart';
+import '../../core/services/notification_service.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
@@ -16,6 +17,7 @@ class AuthCubit extends Cubit<AuthState> {
         final user = await repository.getProfile();
         if (user != null) {
           emit(AuthAuthenticated(user));
+          NotificationService().updateToken();
         } else {
           emit(AuthUnauthenticated());
         }
@@ -29,6 +31,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> login(UserModel user) async {
     emit(AuthAuthenticated(user));
+    NotificationService().updateToken();
   }
 
   Future<void> logout() async {

@@ -10,6 +10,8 @@ class TaskModel extends Equatable {
   final DateTime createdAt;
   final DateTime? completedAt;
   final DateTime? dueDate;
+  final String? proofNote;
+  final String? proofUrl;
 
   const TaskModel({
     required this.id,
@@ -21,6 +23,8 @@ class TaskModel extends Equatable {
     required this.createdAt,
     this.completedAt,
     this.dueDate,
+    this.proofNote,
+    this.proofUrl,
   });
 
   TaskModel copyWith({
@@ -33,6 +37,8 @@ class TaskModel extends Equatable {
     DateTime? createdAt,
     DateTime? completedAt,
     DateTime? dueDate,
+    String? proofNote,
+    String? proofUrl,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -44,6 +50,8 @@ class TaskModel extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       completedAt: completedAt ?? this.completedAt,
       dueDate: dueDate ?? this.dueDate,
+      proofNote: proofNote ?? this.proofNote,
+      proofUrl: proofUrl ?? this.proofUrl,
     );
   }
 
@@ -58,6 +66,8 @@ class TaskModel extends Equatable {
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
       completedAt: json['completedAt'] != null ? DateTime.parse(json['completedAt']) : null,
       dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
+      proofNote: json['proofNote'],
+      proofUrl: json['proofUrl'],
     );
   }
 
@@ -72,6 +82,8 @@ class TaskModel extends Equatable {
       'createdAt': createdAt.toIso8601String(),
       'completedAt': completedAt?.toIso8601String(),
       'dueDate': dueDate?.toIso8601String(),
+      'proofNote': proofNote,
+      'proofUrl': proofUrl,
     };
   }
 
@@ -86,5 +98,7 @@ class TaskModel extends Equatable {
         createdAt,
         completedAt,
         dueDate,
+        proofNote,
+        proofUrl,
       ];
 }

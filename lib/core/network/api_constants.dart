@@ -17,9 +17,11 @@ class ApiConstants {
   // Task endpoints
   static const String tasks = '$baseUrl/tasks';
   static String completeTask(String id) => '$tasks/$id/complete';
+  static String verifyTask(String id) => '$tasks/$id/verify';
 
   // User endpoints
   static const String profile = '$baseUrl/users/profile';
+  static const String milestones = '$baseUrl/users/milestones';
 
   // Leaderboard endpoints
   static const String leaderboard = '$baseUrl/leaderboard';

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "198266350153",
+    "project_id": "climbirl-dev",
+    "storage_bucket": "climbirl-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:198266350153:android:ead76af71e6b1e08c82d98",
+        "android_client_info": {
+          "package_name": "com.trackittoo.climbirl"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkgWCAY4MhpNCPZ06D6IPgNWSCgiq7n-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:198266350153:android:9d80d7e1d5dbbd12c82d98",
+        "android_client_info": {
+          "package_name": "com.trackittoo.climbirl.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkgWCAY4MhpNCPZ06D6IPgNWSCgiq7n-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

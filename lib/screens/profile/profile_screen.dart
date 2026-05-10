@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/services/notification_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../cubits/profile/profile_cubit.dart';
@@ -459,6 +460,11 @@ class ProfileScreen extends StatelessWidget {
                             ),
                           ),
                           _MenuTile(
+                            icon: Icons.notifications_rounded,
+                            label: 'Notification Time',
+                            onTap: () => _showNotificationTimePicker(context),
+                          ),
+                          _MenuTile(
                             icon: Icons.description_rounded,
                             label: 'Privacy Policy',
                             onTap: () => _launchURL(ApiConstants.privacyPolicy),
@@ -557,6 +563,44 @@ Future<void> _launchURL(String url) async {
   final uri = Uri.parse(url);
   if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
     throw Exception('Could not launch $url');
+  }
+}
+
+void _showNotificationTimePicker(BuildContext context) async {
+  final profileCubit = context.read<ProfileCubit>();
+  final user = profileCubit.state.user;
+  
+  final parts = user.notificationTime.split(':');
+  final utcHour = int.tryParse(parts[0]) ?? 8;
+  final utcMinute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+  
+  final now = DateTime.now();
+  final utcDateTime = DateTime.utc(now.year, now.month, now.day, utcHour, utcMinute);
+  final localDateTime = utcDateTime.toLocal();
+  
+  final initialTime = TimeOfDay(
+    hour: localDateTime.hour,
+    minute: localDateTime.minute,
+  );
+
+  final TimeOfDay? picked = await showTimePicker(
+    context: context,
+    initialTime: initialTime,
+  );
+
+  if (picked != null) {
+    final pickedDateTime = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
+    final utcDateTime = pickedDateTime.toUtc();
+    final timeStr = '${utcDateTime.hour.toString().padLeft(2, '0')}:${utcDateTime.minute.toString().padLeft(2, '0')}';
+    
+    final updatedUser = user.copyWith(notificationTime: timeStr);
+    final success = await profileCubit.updateUser(updatedUser);
+    
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Notification time updated to ${picked.format(context)}')),
+      );
+    }
   }
 }
 

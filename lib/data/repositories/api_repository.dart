@@ -170,6 +170,50 @@ class ApiRepository {
     }
   }
 
+  Future<Map<String, dynamic>?> recordMilestoneAd() async {
+    try {
+      final token = await getToken();
+      final response = await http.post(
+        Uri.parse('${ApiConstants.profile}/milestone/ad'),
+        headers: _getHeaders(token),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'user': UserModel.fromJson(data['user']),
+          'rewardEarned': data['rewardEarned'],
+        };
+      } else {
+        _logger.e('Failed to record milestone ad: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      _logger.e('Error recording milestone ad', error: e);
+      return null;
+    }
+  }
+
+  Future<List<dynamic>> getMilestones() async {
+    try {
+      final token = await getToken();
+      final response = await http.get(
+        Uri.parse(ApiConstants.milestones),
+        headers: _getHeaders(token),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      } else {
+        _logger.e('Failed to fetch milestones: ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      _logger.e('Error fetching milestones', error: e);
+      return [];
+    }
+  }
+
   // Task Methods
   Future<List<TaskModel>> getTasks() async {
     try {
@@ -192,7 +236,7 @@ class ApiRepository {
     }
   }
 
-  Future<TaskModel?> createTask(TaskModel task) async {
+  Future<Map<String, dynamic>?> createTask(TaskModel task) async {
     try {
       final token = await getToken();
       final response = await http.post(
@@ -202,10 +246,14 @@ class ApiRepository {
       );
 
       if (response.statusCode == 201) {
-        return TaskModel.fromJson(jsonDecode(response.body));
+        final data = jsonDecode(response.body);
+        return {
+          'task': TaskModel.fromJson(data['task']),
+          'user': UserModel.fromJson(data['user']),
+        };
       } else {
-        _logger.e('Failed to create task: ${response.body}');
-        return null;
+        final data = jsonDecode(response.body);
+        throw Exception(data['message'] ?? 'Failed to create task');
       }
     } catch (e) {
       _logger.e('Error creating task', error: e);
@@ -225,13 +273,42 @@ class ApiRepository {
         final data = jsonDecode(response.body);
         // The backend returns { task, user }
         return UserModel.fromJson(data['user']);
-      } else {
-        _logger.e('Failed to complete task: ${response.body}');
-        return null;
       }
     } catch (e) {
       _logger.e('Error completing task', error: e);
       return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> verifyTask({
+    required String taskId,
+    String? imageBase64,
+    String? proofNote,
+  }) async {
+    try {
+      final token = await getToken();
+      final response = await http.post(
+        Uri.parse(ApiConstants.verifyTask(taskId)),
+        headers: _getHeaders(token),
+        body: jsonEncode({
+          if (imageBase64 != null) 'imageBase64': imageBase64,
+          if (proofNote != null) 'proofNote': proofNote,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'task': TaskModel.fromJson(data['task']),
+          'user': UserModel.fromJson(data['user']),
+        };
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(data['reason'] ?? data['message'] ?? 'Verification failed');
+      }
+    } catch (e) {
+      _logger.e('Error verifying task', error: e);
+      rethrow;
     }
   }
 

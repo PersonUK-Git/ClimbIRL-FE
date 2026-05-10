@@ -9,12 +9,14 @@ class ProfileState extends Equatable {
   final List<AchievementModel> achievements;
   final ProfileStatus status;
   final String? errorMessage;
+  final List<dynamic> milestones;
 
   const ProfileState({
     required this.user,
     this.achievements = const [],
     this.status = ProfileStatus.initial,
     this.errorMessage,
+    this.milestones = const [],
   });
 
   List<AchievementModel> get unlockedAchievements =>
@@ -28,16 +30,18 @@ class ProfileState extends Equatable {
     List<AchievementModel>? achievements,
     ProfileStatus? status,
     String? errorMessage,
+    List<dynamic>? milestones,
   }) {
     return ProfileState(
       user: user ?? this.user,
       achievements: achievements ?? this.achievements,
       status: status ?? this.status,
       errorMessage: errorMessage ?? this.errorMessage,
+      milestones: milestones ?? this.milestones,
     );
   }
 
   @override
-  List<Object?> get props => [user, achievements, status, errorMessage];
+  List<Object?> get props => [user, achievements, status, errorMessage, milestones];
 }
 
