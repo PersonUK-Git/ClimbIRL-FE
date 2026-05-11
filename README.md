@@ -67,15 +67,40 @@ flutter pub get
 flutter run
 ```
 
-### 4. Build for Production
+### 4. Deployment
+
+#### Local Builds
+To build the app locally for testing or manual distribution:
 
 ```bash
-# Android
+# Android (APK)
 flutter build apk --release
+
+# Android (App Bundle for Play Store)
+flutter build appbundle --flavor prod --release
 
 # iOS (Requires macOS/Xcode)
 flutter build ios --release
 ```
+
+#### Automated Deployment (GitHub Actions)
+The project includes a GitHub Actions workflow for automated deployment to the Google Play Store (Closed Testing / Alpha track).
+
+To trigger a deployment:
+1. Go to the **Actions** tab in the GitHub repository.
+2. Select the **Deploy Flutter App** workflow.
+3. Click the **Run workflow** dropdown.
+4. Type `yes` in the confirmation field (this is a safety check to prevent accidental deployments).
+5. Click **Run workflow**.
+
+This workflow will:
+- Check out the code.
+- Set up Java and Flutter.
+- Install dependencies.
+- Decode the keystore and set up signing properties.
+- Increment the `versionCode` in `android/app/build.gradle.kts` and commit the change back to `main`.
+- Build the production App Bundle.
+- Upload the bundle to the Google Play Store on the `alpha` track.
 
 ## 🎥 Key Technical Details
 

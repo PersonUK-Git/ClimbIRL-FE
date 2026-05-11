@@ -1,13 +1,17 @@
 name: Deploy Flutter App
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "yes" to confirm deployment'
+        required: true
+        default: 'no'
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'yes'
     permissions:
       contents: write
 
