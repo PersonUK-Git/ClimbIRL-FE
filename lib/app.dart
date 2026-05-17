@@ -12,6 +12,7 @@ import 'cubits/onboarding/onboarding_cubit.dart';
 import 'cubits/onboarding/onboarding_state.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/login/login_screen.dart';
+import 'screens/network/no_connection_screen.dart';
 import 'widgets/app_bottom_nav.dart';
 import 'data/repositories/api_repository.dart';
 
@@ -86,7 +87,7 @@ class _AppView extends StatelessWidget {
                     theme: AppTheme.light,
                     darkTheme: AppTheme.dark,
                     themeMode: themeState.themeMode,
-                    home: _getHome(authState, onboardingState),
+                    home: _getHome(context, authState, onboardingState),
                   ),
                 );
               },
@@ -97,7 +98,15 @@ class _AppView extends StatelessWidget {
     );
   }
 
-  Widget _getHome(AuthState authState, OnboardingState onboardingState) {
+  Widget _getHome(BuildContext context, AuthState authState, OnboardingState onboardingState) {
+    if (authState is AuthNetworkError) {
+      return NoConnectionScreen(
+        onRetry: () {
+          context.read<AuthCubit>().checkAuthStatus();
+        },
+      );
+    }
+
     if (onboardingState is OnboardingInitial ||
         onboardingState is OnboardingLoading ||
         authState is AuthInitial ||
