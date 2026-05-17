@@ -32,6 +32,20 @@ class ApiRepository {
     await prefs.remove(_tokenKey);
   }
 
+  Future<bool> checkConnection() async {
+    try {
+      final response = await http.get(Uri.parse(ApiConstants.baseUrl)).timeout(const Duration(seconds: 5));
+      if (response.statusCode >= 500) {
+        _logger.e('Server returned gateway/server error: ${response.statusCode}');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      _logger.e('Connection check failed', error: e);
+      return false;
+    }
+  }
+
   Map<String, String> _getHeaders(String? token) {
     return {
       'Content-Type': 'application/json',

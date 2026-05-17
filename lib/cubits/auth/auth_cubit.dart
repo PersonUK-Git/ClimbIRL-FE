@@ -12,6 +12,12 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> checkAuthStatus() async {
     emit(AuthLoading());
     try {
+      final isConnected = await repository.checkConnection();
+      if (!isConnected) {
+        emit(AuthNetworkError());
+        return;
+      }
+
       final token = await repository.getToken();
       if (token != null) {
         final user = await repository.getProfile();

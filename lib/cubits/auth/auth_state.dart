@@ -23,6 +23,8 @@ class AuthAuthenticated extends AuthState {
 
 class AuthUnauthenticated extends AuthState {}
 
+class AuthNetworkError extends AuthState {}
+
 class AuthError extends AuthState {
   final String message;
 
