@@ -10,7 +10,7 @@ on:
         default: 'no'
         type: choice
         options:
-          - no
+          - 'no'
           - alpha
           - beta
           - production
