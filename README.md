@@ -1,6 +1,6 @@
 # 🧗 ClimbIRL - Flutter Mobile App
 
-ClimbIRL is a premium, gamified task management application built with Flutter. It transforms productivity into an RPG-like experience where users earn XP, unlock achievements, and climb a global leaderboard by completing real-life tasks.
+ClimbIRL is a premium, gamified task management application built with Flutter. It transforms productivity into an RPG-like experience where users earn XP, unlock achievements, and climb a global leaderboard by completing real-life tasks. 
 
 ## ✨ Features
 
