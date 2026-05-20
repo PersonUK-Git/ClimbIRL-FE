@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../cubits/onboarding/onboarding_cubit.dart';
+import '../../core/network/api_constants.dart';
 
 import '../../cubits/profile/profile_cubit.dart';
 import '../../models/user_model.dart';
@@ -94,6 +97,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
+  Future<void> _launchURL(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
   bool _isNavEnabled() {
     if (_currentPage < 4) return true;
     if (_currentPage == 4) {
@@ -177,6 +187,45 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
+                if (_currentPage == 3) ...[
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: TextStyle(
+                        color: cs.onSurfaceVariant,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                      children: [
+                        const TextSpan(text: 'By continuing, you agree to our '),
+                        TextSpan(
+                          text: 'Privacy Policy',
+                          style: TextStyle(
+                            color: currentColor,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                            decorationColor: currentColor.withValues(alpha: 0.5),
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () => _launchURL(ApiConstants.privacyPolicy),
+                        ),
+                        const TextSpan(text: ' and '),
+                        TextSpan(
+                          text: 'Terms & Conditions',
+                          style: TextStyle(
+                            color: currentColor,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                            decorationColor: currentColor.withValues(alpha: 0.5),
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () => _launchURL(ApiConstants.termsOfService),
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn(delay: 200.ms),
+                  const SizedBox(height: 16),
+                ],
                 // Button
                 SizedBox(
                   width: double.infinity,
