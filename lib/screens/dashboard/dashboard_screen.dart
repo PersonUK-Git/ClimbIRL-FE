@@ -96,17 +96,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 radius: 22,
                                 backgroundColor:
                                     Theme.of(context).colorScheme.primaryContainer,
-                                child: Text(
-                                  state.user.name.isNotEmpty
-                                      ? state.user.name[0].toUpperCase()
-                                      : 'U',
-                                  style: tt.titleMedium?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onPrimaryContainer,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
+                                backgroundImage: state.user.avatarUrl.isNotEmpty
+                                    ? NetworkImage(state.user.avatarUrl)
+                                    : null,
+                                child: state.user.avatarUrl.isEmpty
+                                    ? Text(
+                                        state.user.name.isNotEmpty
+                                            ? state.user.name[0].toUpperCase()
+                                            : 'U',
+                                        style: tt.titleMedium?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimaryContainer,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      )
+                                    : null,
                               ),
                             ],
                           ).animate().fadeIn(duration: 400.ms).slideY(
