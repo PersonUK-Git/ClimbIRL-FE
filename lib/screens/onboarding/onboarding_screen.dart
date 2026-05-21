@@ -1,11 +1,16 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../cubits/onboarding/onboarding_cubit.dart';
 import '../../core/network/api_constants.dart';
+import '../../data/repositories/api_repository.dart';
 
 import '../../cubits/profile/profile_cubit.dart';
 import '../../models/user_model.dart';
@@ -29,6 +34,130 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   String? _selectedGender;
   DateTime? _selectedDate;
   bool _isLoading = false;
+
+  // Image Picking State
+  final ImagePicker _picker = ImagePicker();
+  File? _avatarImage;
+  String? _avatarBase64;
+
+  // Username Availability State
+  bool? _isUsernameAvailable;
+  bool _isCheckingUsername = false;
+  Timer? _usernameDebounce;
+
+  void _onUsernameChanged(String value) {
+    if (_usernameDebounce?.isActive ?? false) _usernameDebounce!.cancel();
+
+    final trimmed = value.trim();
+    if (trimmed.length < 3) {
+      setState(() {
+        _isUsernameAvailable = null;
+        _isCheckingUsername = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isCheckingUsername = true;
+      _isUsernameAvailable = null;
+    });
+
+    _usernameDebounce = Timer(const Duration(milliseconds: 500), () async {
+      final available = await ApiRepository().isUsernameAvailable(trimmed);
+      if (mounted) {
+        setState(() {
+          _isUsernameAvailable = available;
+          _isCheckingUsername = false;
+        });
+      }
+    });
+  }
+
+  Future<void> _pickAvatar() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Select Profile Picture',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildPickerOption(
+                  icon: Icons.camera_alt_rounded,
+                  label: 'Camera',
+                  onTap: () => _pickImage(ImageSource.camera),
+                ),
+                _buildPickerOption(
+                  icon: Icons.photo_library_rounded,
+                  label: 'Gallery',
+                  onTap: () => _pickImage(ImageSource.gallery),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPickerOption({required IconData icon, required String label, required VoidCallback onTap}) {
+    final cs = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: cs.primaryContainer,
+              child: Icon(icon, color: cs.primary, size: 28),
+            ),
+            const SizedBox(height: 8),
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        imageQuality: 50,
+        maxWidth: 512,
+      );
+
+      if (image != null) {
+        final file = File(image.path);
+        final bytes = await file.readAsBytes();
+        setState(() {
+          _avatarImage = file;
+          _avatarBase64 = base64Encode(bytes);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
+  }
 
   final List<OnboardingSlide> _introSlides = [
     const OnboardingSlide(
@@ -59,6 +188,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   void dispose() {
+    _usernameDebounce?.cancel();
     _nameController.dispose();
     _emailController.dispose();
     _usernameController.dispose();
@@ -80,7 +210,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       dateOfBirth: _selectedDate,
     );
 
-    final success = await profileCubit.register(updatedUser);
+    final success = await profileCubit.register(updatedUser, avatarBase64: _avatarBase64);
 
     if (mounted) {
       if (success) {
@@ -112,7 +242,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           _selectedDate != null;
     }
     if (_currentPage == 5) return _emailController.text.contains('@');
-    if (_currentPage == 6) return _usernameController.text.length >= 3;
+    if (_currentPage == 6) return _usernameController.text.length >= 3 && _isUsernameAvailable == true;
     return true;
   }
 
@@ -340,6 +470,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             textAlign: TextAlign.center,
           ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
+          const SizedBox(height: 120),
         ],
       ),
     );
@@ -351,24 +482,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'Who are you?',
       subtitle: 'Let\'s start with the basics.',
       children: [
-        Center(
-          child: Stack(
-            children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundColor: cs.primaryContainer,
-                child: Icon(Icons.person_rounded, size: 50, color: cs.primary),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: CircleAvatar(
-                  radius: 18,
-                  backgroundColor: cs.primary,
-                  child: const Icon(Icons.camera_alt_rounded, size: 18, color: Colors.white),
+        GestureDetector(
+          onTap: _pickAvatar,
+          child: Center(
+            child: Stack(
+              children: [
+                CircleAvatar(
+                  radius: 50,
+                  backgroundColor: cs.primaryContainer,
+                  backgroundImage: _avatarImage != null ? FileImage(_avatarImage!) : null,
+                  child: _avatarImage == null
+                      ? Icon(Icons.person_rounded, size: 50, color: cs.primary)
+                      : null,
                 ),
-              ),
-            ],
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: cs.primary,
+                    child: const Icon(Icons.camera_alt_rounded, size: 18, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 32),
@@ -408,7 +545,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'Pick a Handle',
       subtitle: 'This is how other climbers will see you.',
       children: [
-        _buildTextField(cs, 'Username', _usernameController, Icons.alternate_email_rounded),
+        TextField(
+          controller: _usernameController,
+          onChanged: _onUsernameChanged,
+          decoration: InputDecoration(
+            labelText: 'Username',
+            prefixIcon: const Icon(Icons.alternate_email_rounded),
+            suffixIcon: _isCheckingUsername
+                ? const Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : (_isUsernameAvailable != null
+                    ? Icon(
+                        _isUsernameAvailable!
+                            ? Icons.check_circle_rounded
+                            : Icons.cancel_rounded,
+                        color: _isUsernameAvailable! ? Colors.green : Colors.red,
+                      )
+                    : null),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            filled: true,
+            fillColor: cs.surfaceContainerHighest.withValues(alpha: 0.3),
+            helperText: _isUsernameAvailable == true ? 'Username is available! ' : null,
+            helperStyle: const TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
+            errorText: _isUsernameAvailable == false ? 'Username is already taken' : null,
+          ),
+        ),
       ],
     );
   }

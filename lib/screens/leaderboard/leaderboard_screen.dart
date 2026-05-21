@@ -295,14 +295,19 @@ class _PodiumSlot extends StatelessWidget {
             CircleAvatar(
               radius: isFirst ? 30 : 24,
               backgroundColor: cs.primaryContainer,
-              child: Text(
-                entry.name[0],
-                style: tt.titleMedium?.copyWith(
-                  color: cs.onPrimaryContainer,
-                  fontWeight: FontWeight.w700,
-                  fontSize: isFirst ? 20 : 16,
-                ),
-              ),
+              backgroundImage: entry.avatarUrl.isNotEmpty
+                  ? NetworkImage(entry.avatarUrl)
+                  : null,
+              child: entry.avatarUrl.isEmpty
+                  ? Text(
+                      entry.name[0],
+                      style: tt.titleMedium?.copyWith(
+                        color: cs.onPrimaryContainer,
+                        fontWeight: FontWeight.w700,
+                        fontSize: isFirst ? 20 : 16,
+                      ),
+                    )
+                  : null,
             ),
             Positioned(
               bottom: -6,
@@ -478,15 +483,20 @@ class _RankCard extends StatelessWidget {
             backgroundColor: isCurrentUser
                 ? cs.onPrimary.withValues(alpha: 0.2)
                 : cs.primaryContainer,
-            child: Text(
-              entry.name[0],
-              style: tt.labelMedium?.copyWith(
-                color: isCurrentUser
-                    ? cs.onPrimary
-                    : cs.onPrimaryContainer,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            backgroundImage: entry.avatarUrl.isNotEmpty
+                ? NetworkImage(entry.avatarUrl)
+                : null,
+            child: entry.avatarUrl.isEmpty
+                ? Text(
+                    entry.name[0],
+                    style: tt.labelMedium?.copyWith(
+                      color: isCurrentUser
+                          ? cs.onPrimary
+                          : cs.onPrimaryContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(width: 12),
           // Name

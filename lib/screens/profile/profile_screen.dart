@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/services/notification_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -15,6 +19,7 @@ import '../../core/network/api_constants.dart';
 import '../../data/repositories/api_repository.dart';
 import '../../cubits/onboarding/onboarding_cubit.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../models/user_model.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -142,15 +147,20 @@ class ProfileScreen extends StatelessWidget {
                                 CircleAvatar(
                                   radius: 36,
                                   backgroundColor: cs.primaryContainer,
-                                  child: Text(
-                                    user.name.isNotEmpty
-                                        ? user.name[0].toUpperCase()
-                                        : 'U',
-                                    style: tt.headlineSmall?.copyWith(
-                                      color: cs.onPrimaryContainer,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
+                                  backgroundImage: user.avatarUrl.isNotEmpty
+                                      ? NetworkImage(user.avatarUrl)
+                                      : null,
+                                  child: user.avatarUrl.isEmpty
+                                      ? Text(
+                                          user.name.isNotEmpty
+                                              ? user.name[0].toUpperCase()
+                                              : 'U',
+                                          style: tt.headlineSmall?.copyWith(
+                                            color: cs.onPrimaryContainer,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        )
+                                      : null,
                                 ),
                               ],
                             ),
@@ -189,6 +199,21 @@ class ProfileScreen extends StatelessWidget {
                                 style: tt.labelMedium?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            OutlinedButton.icon(
+                              onPressed: () => _showEditProfileSheet(context, user),
+                              icon: const Icon(Icons.edit_rounded, size: 16),
+                              label: const Text('Edit Profile'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                               ),
                             ),
@@ -709,6 +734,361 @@ class _StatCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+void _showEditProfileSheet(BuildContext context, UserModel user) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (_) => BlocProvider.value(
+      value: context.read<ProfileCubit>(),
+      child: _EditProfileSheet(user: user),
+    ),
+  );
+}
+
+class _EditProfileSheet extends StatefulWidget {
+  final UserModel user;
+
+  const _EditProfileSheet({required this.user});
+
+  @override
+  State<_EditProfileSheet> createState() => _EditProfileSheetState();
+}
+
+class _EditProfileSheetState extends State<_EditProfileSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _usernameController;
+  File? _pickedImage;
+  String? _avatarBase64;
+  bool _isLoading = false;
+
+  // Username Availability State
+  bool? _isUsernameAvailable = true;
+  bool _isCheckingUsername = false;
+  Timer? _usernameDebounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.user.name);
+    _usernameController = TextEditingController(text: widget.user.username);
+  }
+
+  @override
+  void dispose() {
+    _usernameDebounce?.cancel();
+    _nameController.dispose();
+    _usernameController.dispose();
+    super.dispose();
+  }
+
+  void _onUsernameChanged(String value) {
+    if (_usernameDebounce?.isActive ?? false) _usernameDebounce!.cancel();
+
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      setState(() {
+        _isUsernameAvailable = null;
+        _isCheckingUsername = false;
+      });
+      return;
+    }
+
+    if (trimmed.toLowerCase() == widget.user.username.toLowerCase()) {
+      setState(() {
+        _isUsernameAvailable = true;
+        _isCheckingUsername = false;
+      });
+      return;
+    }
+
+    if (trimmed.length < 3) {
+      setState(() {
+        _isUsernameAvailable = null;
+        _isCheckingUsername = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isCheckingUsername = true;
+      _isUsernameAvailable = null;
+    });
+
+    _usernameDebounce = Timer(const Duration(milliseconds: 500), () async {
+      final available = await ApiRepository().isUsernameAvailable(trimmed, excludeUserId: widget.user.id);
+      if (mounted) {
+        setState(() {
+          _isUsernameAvailable = available;
+          _isCheckingUsername = false;
+        });
+      }
+    });
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 500,
+      );
+      if (pickedFile != null) {
+        final file = File(pickedFile.path);
+        final bytes = await file.readAsBytes();
+        setState(() {
+          _pickedImage = file;
+          _avatarBase64 = base64Encode(bytes);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
+  }
+
+  void _showImagePickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded),
+              title: const Text('Take a Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final updatedUser = widget.user.copyWith(
+      name: _nameController.text.trim(),
+      username: _usernameController.text.trim(),
+    );
+
+    final success = await context.read<ProfileCubit>().updateUser(
+      updatedUser,
+      avatarBase64: _avatarBase64,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (success) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated successfully! 🎉'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update profile. Please try again.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: cs.onSurfaceVariant.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Edit Profile',
+                style: tt.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 24),
+              GestureDetector(
+                onTap: _showImagePickerOptions,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: cs.primaryContainer,
+                      backgroundImage: _pickedImage != null
+                          ? FileImage(_pickedImage!)
+                          : (widget.user.avatarUrl.isNotEmpty
+                              ? NetworkImage(widget.user.avatarUrl) as ImageProvider
+                              : null),
+                      child: _pickedImage == null && widget.user.avatarUrl.isEmpty
+                          ? Text(
+                              widget.user.name.isNotEmpty
+                                  ? widget.user.name[0].toUpperCase()
+                                  : 'U',
+                              style: tt.headlineLarge?.copyWith(
+                                color: cs.onPrimaryContainer,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: cs.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: cs.surface, width: 2),
+                        ),
+                        child: Icon(
+                          Icons.camera_alt_rounded,
+                          size: 16,
+                          color: cs.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Name',
+                  prefixIcon: const Icon(Icons.person_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                validator: (val) =>
+                    val == null || val.trim().isEmpty ? 'Name cannot be empty' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _usernameController,
+                onChanged: _onUsernameChanged,
+                decoration: InputDecoration(
+                  labelText: 'Username',
+                  prefixIcon: const Icon(Icons.alternate_email_rounded),
+                  suffixIcon: _isCheckingUsername
+                      ? const Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : (_isUsernameAvailable != null
+                          ? Icon(
+                              _isUsernameAvailable!
+                                  ? Icons.check_circle_rounded
+                                  : Icons.cancel_rounded,
+                              color: _isUsernameAvailable! ? Colors.green : Colors.red,
+                            )
+                          : null),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  helperText: _isUsernameAvailable == true && _usernameController.text.trim().toLowerCase() != widget.user.username.toLowerCase()
+                      ? 'Username is available! '
+                      : null,
+                  helperStyle: const TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
+                  errorText: _isUsernameAvailable == false ? 'Username is already taken' : null,
+                ),
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) return 'Username cannot be empty';
+                  if (val.trim().length < 3) return 'Username must be at least 3 characters';
+                  if (_isUsernameAvailable == false) return 'Username is already taken';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton(
+                  onPressed: _isLoading || _isCheckingUsername || _isUsernameAvailable != true ? null : _save,
+                  style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Save Changes',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

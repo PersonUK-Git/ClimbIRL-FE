@@ -50,8 +50,8 @@ class ProfileCubit extends Cubit<ProfileState> {
     loadProfile();
   }
 
-  Future<bool> updateUser(UserModel newUser) async {
-    final updatedUser = await repository.updateProfile(newUser);
+  Future<bool> updateUser(UserModel newUser, {String? avatarBase64}) async {
+    final updatedUser = await repository.updateProfile(newUser, avatarBase64: avatarBase64);
     if (updatedUser != null) {
       emit(state.copyWith(user: updatedUser));
       return true;
@@ -68,8 +68,8 @@ class ProfileCubit extends Cubit<ProfileState> {
     return null;
   }
 
-  Future<bool> register(UserModel newUser) async {
-    final user = await repository.register(newUser);
+  Future<bool> register(UserModel newUser, {String? avatarBase64}) async {
+    final user = await repository.register(newUser, avatarBase64: avatarBase64);
     if (user != null) {
       emit(state.copyWith(user: user));
       return true;

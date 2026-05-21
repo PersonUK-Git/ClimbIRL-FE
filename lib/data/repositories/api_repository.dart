@@ -55,12 +55,17 @@ class ApiRepository {
   }
 
   // Auth Methods
-  Future<UserModel?> register(UserModel user) async {
+  Future<UserModel?> register(UserModel user, {String? avatarBase64}) async {
     try {
+      final bodyMap = user.toJson();
+      if (avatarBase64 != null) {
+        bodyMap['avatar'] = avatarBase64;
+      }
+      
       final response = await http.post(
         Uri.parse(ApiConstants.register),
         headers: _getHeaders(null),
-        body: jsonEncode(user.toJson()),
+        body: jsonEncode(bodyMap),
       );
 
       if (response.statusCode == 201) {
@@ -75,6 +80,28 @@ class ApiRepository {
     } catch (e) {
       _logger.e('Error during registration', error: e);
       return null;
+    }
+  }
+
+  Future<bool> isUsernameAvailable(String username, {String? excludeUserId}) async {
+    try {
+      String url = '${ApiConstants.checkUsername}?username=${Uri.encodeComponent(username)}';
+      if (excludeUserId != null) {
+        url += '&excludeUserId=${Uri.encodeComponent(excludeUserId)}';
+      }
+      final response = await http.get(
+        Uri.parse(url),
+        headers: _getHeaders(null),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['available'] == true;
+      }
+      return false;
+    } catch (e) {
+      _logger.e('Error checking username availability', error: e);
+      return false;
     }
   }
 
@@ -163,13 +190,18 @@ class ApiRepository {
     }
   }
 
-  Future<UserModel?> updateProfile(UserModel user) async {
+  Future<UserModel?> updateProfile(UserModel user, {String? avatarBase64}) async {
     try {
       final token = await getToken();
+      final bodyMap = user.toJson();
+      if (avatarBase64 != null) {
+        bodyMap['avatar'] = avatarBase64;
+      }
+
       final response = await http.put(
         Uri.parse(ApiConstants.profile),
         headers: _getHeaders(token),
-        body: jsonEncode(user.toJson()),
+        body: jsonEncode(bodyMap),
       );
 
       if (response.statusCode == 200) {
