@@ -98,6 +98,7 @@ class TodayTasksSection extends StatelessWidget {
                             final result = await showModalBottomSheet<bool>(
                               context: context,
                               isScrollControlled: true,
+                              showDragHandle: false,
                               backgroundColor: Colors.transparent,
                               builder: (_) => MultiBlocProvider(
                                 providers: [

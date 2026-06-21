@@ -1,7 +1,8 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const String _devBaseUrl = 'http://192.168.1.65:5000/api';
+  static const String _devBaseUrl =
+      'https://brooke-morphotonemic-sindy.ngrok-free.dev/api';
   static const String _prodBaseUrl = 'https://api.climbirl.trackittoo.com/api';
 
   // Toggle this to switch between environments
@@ -26,12 +27,14 @@ class ApiConstants {
 
   // Leaderboard endpoints
   static const String leaderboard = '$baseUrl/leaderboard';
-  static String getLeaderboardWithPeriod(String period) => '$leaderboard?period=$period';
+  static String getLeaderboardWithPeriod(String period) =>
+      '$leaderboard?period=$period';
 
   // Legal & Static pages
-  static const String privacyPolicy = 'https://api.climbirl.trackittoo.com/privacy';
-  static const String termsOfService = 'https://api.climbirl.trackittoo.com/terms';
-  static const String deleteAccountInfo = 'https://api.climbirl.trackittoo.com/delete-account';
-
+  static const String privacyPolicy =
+      'https://api.climbirl.trackittoo.com/privacy';
+  static const String termsOfService =
+      'https://api.climbirl.trackittoo.com/terms';
+  static const String deleteAccountInfo =
+      'https://api.climbirl.trackittoo.com/delete-account';
 }
-
