@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,12 +21,31 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final List<TextEditingController> _otpControllers = List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _otpFocusNodes = List.generate(6, (_) => FocusNode());
+  late final List<FocusNode> _otpFocusNodes;
   
   bool _isOtpSent = false;
   bool _isLoading = false;
   int _timerSeconds = 30;
   Timer? _resendTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _otpFocusNodes = List.generate(6, (index) {
+      return FocusNode(
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
+            if (_otpControllers[index].text.isEmpty && index > 0) {
+              _otpFocusNodes[index - 1].requestFocus();
+              _otpControllers[index - 1].clear();
+              return KeyEventResult.handled;
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+      );
+    });
+  }
 
   @override
   void dispose() {
@@ -396,8 +416,6 @@ class _LoginScreenState extends State<LoginScreen> {
         onChanged: (value) {
           if (value.isNotEmpty && index < 5) {
             _otpFocusNodes[index + 1].requestFocus();
-          } else if (value.isEmpty && index > 0) {
-            _otpFocusNodes[index - 1].requestFocus();
           }
         },
       ),
