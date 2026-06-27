@@ -22,8 +22,28 @@ import '../../cubits/onboarding/onboarding_cubit.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/user_model.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  late final ScrollController _scrollController;
+  bool _isSnapping = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,20 +57,50 @@ class ProfileScreen extends StatelessWidget {
 
         return SafeArea(
           bottom: false,
-          child: CustomScrollView(
-            slivers: [
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _ProfileHeaderDelegate(
-                  user: user,
-                  progress: progress,
-                  context: context,
-                  cs: cs,
-                  tt: tt,
-                  themeCubit: context.read<ThemeCubit>(),
-                  authCubit: context.read<AuthCubit>(),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is ScrollStartNotification) {
+                _isSnapping = false;
+              }
+              if (_isSnapping) return false;
+              if (notification is ScrollEndNotification) {
+                final double offset = _scrollController.offset;
+                final double maxScroll = 328.0; // maxExtent (400.0) - minExtent (72.0)
+                if (offset > 0.5 && offset < maxScroll - 0.5) {
+                  final double target = offset < maxScroll / 2 ? 0.0 : maxScroll;
+                  _isSnapping = true;
+                  Future.microtask(() {
+                    if (_scrollController.hasClients) {
+                      _scrollController.animateTo(
+                        target,
+                        duration: const Duration(milliseconds: 375),
+                        curve: Curves.fastOutSlowIn,
+                      ).then((_) {
+                        _isSnapping = false;
+                      });
+                    } else {
+                      _isSnapping = false;
+                    }
+                  });
+                }
+              }
+              return false;
+            },
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _ProfileHeaderDelegate(
+                    user: user,
+                    progress: progress,
+                    context: context,
+                    cs: cs,
+                    tt: tt,
+                    themeCubit: context.read<ThemeCubit>(),
+                    authCubit: context.read<AuthCubit>(),
+                  ),
                 ),
-              ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -328,7 +378,8 @@ class ProfileScreen extends StatelessWidget {
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
-        );
+        ),
+      );
       },
     );
   }
