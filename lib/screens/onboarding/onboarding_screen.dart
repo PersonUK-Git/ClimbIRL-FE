@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,7 +25,6 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController _pageController = PageController();
   int _currentPage = 0;
 
   // Form State
@@ -159,33 +159,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  final List<OnboardingSlide> _introSlides = [
-    const OnboardingSlide(
-      title: 'Gamify Your Life',
-      description: 'Turn your daily chores and habits into a rewarding RPG experience. Every task is a quest.',
-      icon: Icons.auto_awesome_rounded,
-      color: Color(0xFF6366F1),
-    ),
-    const OnboardingSlide(
-      title: 'Level Up with Tasks',
-      description: 'Complete tasks to earn XP and level up your profile. Custom categories keep you organized.',
-      icon: Icons.task_alt_rounded,
-      color: Color(0xFF10B981),
-    ),
-    const OnboardingSlide(
-      title: 'Join the Race',
-      description: 'Compete with friends and the community on the global leaderboard. Who will reach the top?',
-      icon: Icons.leaderboard_rounded,
-      color: Color(0xFFF59E0B),
-    ),
-    const OnboardingSlide(
-      title: 'Ready to Climb?',
-      description: 'Your journey starts now. Take the first step and master your daily routine.',
-      icon: Icons.rocket_launch_rounded,
-      color: Color(0xFFEC4899),
-    ),
-  ];
-
   @override
   void dispose() {
     _usernameDebounce?.cancel();
@@ -246,242 +219,439 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return true;
   }
 
+  void _nextPage() {
+    if (_currentPage < 6) {
+      setState(() {
+        _currentPage++;
+      });
+    }
+  }
+
+  Widget _buildDotsIndicator(int page) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: List.generate(
+        4,
+        (index) => AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          margin: const EdgeInsets.only(right: 6),
+          width: page == index ? 24 : 8,
+          height: 5,
+          decoration: BoxDecoration(
+            color: page == index ? const Color(0xFF8070FF) : Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSlideTitle(String prefix, String highlight) {
+    return RichText(
+      textAlign: TextAlign.left,
+      text: TextSpan(
+        style: GoogleFonts.outfit(
+          fontSize: 42,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+          height: 1.1,
+        ),
+        children: [
+          TextSpan(text: prefix),
+          TextSpan(
+            text: highlight,
+            style: const TextStyle(color: Color(0xFF8070FF)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSlideDescription(String desc) {
+    return Text(
+      desc,
+      style: const TextStyle(
+        color: Colors.white54,
+        fontSize: 16,
+        height: 1.4,
+      ),
+    );
+  }
+
+  Widget _buildButton({required String label, required VoidCallback? onPressed}) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: const Color(0xFF0D0B18),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.12), width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginLink() {
+    return Center(
+      child: TextButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        },
+        child: RichText(
+          text: const TextSpan(
+            style: TextStyle(color: Colors.white54, fontSize: 14),
+            children: [
+              TextSpan(text: 'Already climbing? '),
+              TextSpan(
+                text: 'Log in',
+                style: TextStyle(
+                  color: Color(0xFF8070FF),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSlideContent({
+    required Key key,
+    required int pageIndex,
+    required String titlePrefix,
+    required String titleHighlight,
+    required String description,
+    required String buttonLabel,
+    required VoidCallback onPressed,
+    bool showTerms = false,
+  }) {
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildDotsIndicator(pageIndex),
+        const SizedBox(height: 24),
+        _buildSlideTitle(titlePrefix, titleHighlight),
+        const SizedBox(height: 16),
+        _buildSlideDescription(description),
+        if (showTerms) ...[
+          const SizedBox(height: 24),
+          RichText(
+            textAlign: TextAlign.left,
+            text: TextSpan(
+              style: const TextStyle(
+                color: Colors.white38,
+                fontSize: 12,
+                height: 1.4,
+              ),
+              children: [
+                const TextSpan(text: 'By continuing you agree to our '),
+                TextSpan(
+                  text: 'Privacy Policy',
+                  style: const TextStyle(
+                    color: Color(0xFF8070FF),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () => _launchURL(ApiConstants.privacyPolicy),
+                ),
+                const TextSpan(text: ' and '),
+                TextSpan(
+                  text: 'Terms of Service',
+                  style: const TextStyle(
+                    color: Color(0xFF8070FF),
+                    fontWeight: FontWeight.bold,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () => _launchURL(ApiConstants.termsOfService),
+                ),
+                const TextSpan(text: '.'),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 32),
+        _buildButton(
+          label: buttonLabel,
+          onPressed: onPressed,
+        ),
+        const SizedBox(height: 16),
+        _buildLoginLink(),
+      ],
+    );
+  }
+
+  Widget _getCurrentGraphic() {
+    switch (_currentPage) {
+      case 0:
+        return const _OrbitingCardsGraphic(key: ValueKey(0));
+      case 1:
+        return const _TasksGraphic(key: ValueKey(1));
+      case 2:
+        return const _LeaderboardGraphic(key: ValueKey(2));
+      case 3:
+        return const _ClimbGraphic(key: ValueKey(3));
+      default:
+        return const SizedBox(key: ValueKey(-1));
+    }
+  }
+
+  Widget _getCurrentContent(ColorScheme cs) {
+    switch (_currentPage) {
+      case 0:
+        return _buildSlideContent(
+          key: const ValueKey(0),
+          pageIndex: 0,
+          titlePrefix: 'Your life.\nYour ',
+          titleHighlight: 'quest.',
+          description: 'Turn daily habits into XP. Every task you finish makes you stronger.',
+          buttonLabel: 'Get started',
+          onPressed: _nextPage,
+        );
+      case 1:
+        return _buildSlideContent(
+          key: const ValueKey(1),
+          pageIndex: 1,
+          titlePrefix: 'Do it.\n',
+          titleHighlight: 'Prove it.',
+          description: 'Photo-verify your tasks to claim XP. No faking it — every point is earned.',
+          buttonLabel: 'Continue',
+          onPressed: _nextPage,
+        );
+      case 2:
+        return _buildSlideContent(
+          key: const ValueKey(2),
+          pageIndex: 2,
+          titlePrefix: 'Race your\n',
+          titleHighlight: 'friends.',
+          description: 'Weekly leaderboard. See who\'s actually putting in the work — and who isn\'t.',
+          buttonLabel: 'Continue',
+          onPressed: _nextPage,
+        );
+      case 3:
+        return _buildSlideContent(
+          key: const ValueKey(3),
+          pageIndex: 3,
+          titlePrefix: 'Ready to\n',
+          titleHighlight: 'climb?',
+          description: 'Your journey starts now.',
+          buttonLabel: 'Create my account',
+          onPressed: _nextPage,
+          showTerms: true,
+        );
+      case 4:
+        return _buildIdentityContent(cs, key: const ValueKey(4));
+      case 5:
+        return _buildContactContent(cs, key: const ValueKey(5));
+      case 6:
+        return _buildHandleContent(cs, key: const ValueKey(6));
+      default:
+        return const SizedBox(key: ValueKey(-2));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final totalPages = _introSlides.length + 3; // 4 intro + 3 profile
+    final totalPages = 7;
     final isLastPage = _currentPage == totalPages - 1;
-    final currentColor = _currentPage < 4 
-        ? _introSlides[_currentPage].color 
-        : cs.primary;
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      backgroundColor: const Color(0xFF07050F),
+      resizeToAvoidBottomInset: true,
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Stack(
           children: [
             // Background Gradient
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 500),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            Container(
+              decoration: const BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment(0.0, -0.6),
+                  radius: 1.2,
                   colors: [
-                    currentColor.withValues(alpha: 0.15),
-                    cs.surface,
+                    Color(0xFF1E173C),
+                    Color(0xFF07050F),
                   ],
                 ),
               ),
             ),
-  
-            PageView(
-              controller: _pageController,
-              onPageChanged: (index) {
-                FocusScope.of(context).unfocus();
-                setState(() => _currentPage = index);
-              },
-              children: [
-                ..._introSlides.map((slide) => _buildIntroSlide(slide, cs)),
-                _buildIdentitySlide(cs),
-                _buildContactSlide(cs),
-                _buildHandleSlide(cs),
-              ],
-            ),
 
-          // Bottom Controls
-          Positioned(
-            bottom: 60,
-            left: 40,
-            right: 40,
-            child: Column(
-              children: [
-                // Page Indicator
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    totalPages,
-                    (index) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: _currentPage == index ? 24 : 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _currentPage == index
-                            ? currentColor
-                            : cs.outlineVariant,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                if (_currentPage == 3) ...[
-                  RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: TextStyle(
-                        color: cs.onSurfaceVariant,
-                        fontSize: 13,
-                        height: 1.4,
-                      ),
-                      children: [
-                        const TextSpan(text: 'By continuing, you agree to our '),
-                        TextSpan(
-                          text: 'Privacy Policy',
-                          style: TextStyle(
-                            color: currentColor,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                            decorationColor: currentColor.withValues(alpha: 0.5),
-                          ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () => _launchURL(ApiConstants.privacyPolicy),
-                        ),
-                        const TextSpan(text: ' and '),
-                        TextSpan(
-                          text: 'Terms & Conditions',
-                          style: TextStyle(
-                            color: currentColor,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                            decorationColor: currentColor.withValues(alpha: 0.5),
-                          ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () => _launchURL(ApiConstants.termsOfService),
-                        ),
-                      ],
-                    ),
-                  ).animate().fadeIn(delay: 200.ms),
-                  const SizedBox(height: 16),
-                ],
-                // Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isNavEnabled() ? () {
-                      if (isLastPage) {
-                        _handleComplete();
-                      } else {
-                        _pageController.nextPage(
+            SafeArea(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 30),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 24),
+                      // Graphic Section (only for page < 4)
+                      if (_currentPage < 4) ...[
+                        AnimatedSize(
                           duration: const Duration(milliseconds: 500),
-                          curve: Curves.easeInOutCubic,
-                        );
-                      }
-                    } : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: currentColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Text(
-                      isLastPage ? 'Get Started' : 'Continue',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-                if (_currentPage < 4) ...[
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      );
-                    },
-                    child: RichText(
-                      text: TextSpan(
-                        style: TextStyle(color: cs.onSurfaceVariant, fontSize: 15),
-                        children: [
-                          const TextSpan(text: 'Already have an account? '),
-                          TextSpan(
-                            text: 'Login',
-                            style: TextStyle(
-                              color: currentColor,
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                              decorationColor: currentColor.withValues(alpha: 0.5),
+                          curve: Curves.easeInOut,
+                          child: SizedBox(
+                            height: _currentPage == 3 ? 220 : 280,
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 500),
+                              switchInCurve: Curves.easeInOut,
+                              switchOutCurve: Curves.easeInOut,
+                              transitionBuilder: (child, animation) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                );
+                              },
+                              child: _getCurrentGraphic(),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ).animate().fadeIn(delay: 400.ms),
-                ],
-              ],
-            ),
-          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
 
-          if (_isLoading)
-            Container(
-              color: Colors.black26,
-              child: const Center(
-                child: CircularProgressIndicator(),
+                      // Content Section (Title, desc, dots, buttons, inputs)
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeInOut,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 500),
+                          switchInCurve: Curves.easeInOut,
+                          switchOutCurve: Curves.easeInOut,
+                          transitionBuilder: (child, animation) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            );
+                          },
+                          child: _getCurrentContent(cs),
+                        ),
+                      ),
+                      
+                      // Padding for bottom button when typing on form inputs
+                      if (_currentPage >= 4) const SizedBox(height: 120),
+                    ],
+                  ),
+                ),
               ),
             ),
+
+            // Top Left Back Navigation Button
+            if (_currentPage > 0)
+              Positioned(
+                top: 20,
+                left: 16,
+                child: SafeArea(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white70, size: 20),
+                      onPressed: () {
+                        setState(() {
+                          _currentPage--;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ),
+
+            // Bottom Controls (only for profile inputs)
+            if (_currentPage >= 4)
+              Positioned(
+                bottom: 40,
+                left: 32,
+                right: 32,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _isNavEnabled()
+                            ? () {
+                                if (isLastPage) {
+                                  _handleComplete();
+                                } else {
+                                  _nextPage();
+                                }
+                              }
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8070FF),
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: const Color(0xFF8070FF).withValues(alpha: 0.4),
+                          disabledForegroundColor: Colors.white.withValues(alpha: 0.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          isLastPage ? 'Get Started' : 'Continue',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            if (_isLoading)
+              Container(
+                color: Colors.black54,
+                child: const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF8070FF)),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildIntroSlide(OnboardingSlide slide, ColorScheme cs) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: slide.color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              slide.icon,
-              size: 100,
-              color: slide.color,
-            ),
-          ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
-          const SizedBox(height: 48),
-          Text(
-            slide.title,
-            style: GoogleFonts.outfit(
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              color: cs.onSurface,
-            ),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
-          const SizedBox(height: 16),
-          Text(
-            slide.description,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: cs.onSurfaceVariant,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
-          const SizedBox(height: 120),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIdentitySlide(ColorScheme cs) {
-    return _buildFormSlide(
-      cs,
-      title: 'Who are you?',
-      subtitle: 'Let\'s start with the basics.',
+  Widget _buildIdentityContent(ColorScheme cs, {required Key key}) {
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 20),
+        Text(
+          'Who are you?',
+          style: GoogleFonts.outfit(
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Let\'s start with the basics.',
+          style: TextStyle(color: Colors.white54, fontSize: 16),
+        ),
+        const SizedBox(height: 32),
         GestureDetector(
           onTap: _pickAvatar,
           child: Center(
@@ -489,10 +659,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 CircleAvatar(
                   radius: 50,
-                  backgroundColor: cs.primaryContainer,
+                  backgroundColor: const Color(0xFF131124),
                   backgroundImage: _avatarImage != null ? FileImage(_avatarImage!) : null,
                   child: _avatarImage == null
-                      ? Icon(Icons.person_rounded, size: 50, color: cs.primary)
+                      ? const Icon(Icons.person_rounded, size: 50, color: Colors.white54)
                       : null,
                 ),
                 Positioned(
@@ -500,7 +670,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   right: 0,
                   child: CircleAvatar(
                     radius: 18,
-                    backgroundColor: cs.primary,
+                    backgroundColor: const Color(0xFF8070FF),
                     child: const Icon(Icons.camera_alt_rounded, size: 18, color: Colors.white),
                   ),
                 ),
@@ -509,18 +679,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ),
         const SizedBox(height: 32),
-        _buildTextField(cs, 'Full Name', _nameController, Icons.badge_outlined),
+        _buildTextField('Full Name', _nameController, Icons.badge_outlined),
         const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
-              child: _buildDropdown(cs, 'Gender', ['Male', 'Female', 'Other'], (val) {
+              child: _buildDropdown('Gender', ['Male', 'Female', 'Other'], (val) {
                 setState(() => _selectedGender = val);
               }),
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: _buildDatePicker(cs),
+              child: _buildDatePicker(),
             ),
           ],
         ),
@@ -528,29 +698,59 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildContactSlide(ColorScheme cs) {
-    return _buildFormSlide(
-      cs,
-      title: 'Stay Connected',
-      subtitle: 'Your email helps us keep your progress safe.',
+  Widget _buildContactContent(ColorScheme cs, {required Key key}) {
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildTextField(cs, 'Email Address', _emailController, Icons.email_outlined, keyboardType: TextInputType.emailAddress),
+        const SizedBox(height: 20),
+        Text(
+          'Stay Connected',
+          style: GoogleFonts.outfit(
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Your email helps us keep your progress safe.',
+          style: TextStyle(color: Colors.white54, fontSize: 16),
+        ),
+        const SizedBox(height: 32),
+        _buildTextField('Email Address', _emailController, Icons.email_outlined, keyboardType: TextInputType.emailAddress),
       ],
     );
   }
 
-  Widget _buildHandleSlide(ColorScheme cs) {
-    return _buildFormSlide(
-      cs,
-      title: 'Pick a Handle',
-      subtitle: 'This is how other climbers will see you.',
+  Widget _buildHandleContent(ColorScheme cs, {required Key key}) {
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 20),
+        Text(
+          'Pick a Handle',
+          style: GoogleFonts.outfit(
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'This is how other climbers will see you.',
+          style: TextStyle(color: Colors.white54, fontSize: 16),
+        ),
+        const SizedBox(height: 32),
         TextField(
           controller: _usernameController,
           onChanged: _onUsernameChanged,
+          style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             labelText: 'Username',
-            prefixIcon: const Icon(Icons.alternate_email_rounded),
+            labelStyle: const TextStyle(color: Colors.white54),
+            prefixIcon: const Icon(Icons.alternate_email_rounded, color: Colors.white54),
             suffixIcon: _isCheckingUsername
                 ? const Padding(
                     padding: EdgeInsets.all(12.0),
@@ -570,10 +770,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     : null),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFF8070FF)),
             ),
             filled: true,
-            fillColor: cs.surfaceContainerHighest.withValues(alpha: 0.3),
+            fillColor: const Color(0xFF131124),
             helperText: _isUsernameAvailable == true ? 'Username is available! ' : null,
             helperStyle: const TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
             errorText: _isUsernameAvailable == false ? 'Username is already taken' : null,
@@ -582,73 +790,63 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ],
     );
   }
-  Widget _buildFormSlide(ColorScheme cs, {required String title, required String subtitle, required List<Widget> children}) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 100),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: GoogleFonts.outfit(
-                fontSize: 32,
-                fontWeight: FontWeight.w800,
-                color: cs.onSurface,
-              ),
-            ).animate().fadeIn().slideX(begin: -0.1, end: 0),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
-            ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.1, end: 0),
-            const SizedBox(height: 40),
-            ...children,
-            const SizedBox(height: 120), // Extra space for keyboard and bottom controls
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildTextField(ColorScheme cs, String label, TextEditingController controller, IconData icon, {TextInputType? keyboardType}) {
+  Widget _buildTextField(String label, TextEditingController controller, IconData icon, {TextInputType? keyboardType}) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       onChanged: (_) => setState(() {}),
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon),
+        labelStyle: const TextStyle(color: Colors.white54),
+        prefixIcon: Icon(icon, color: Colors.white54),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFF8070FF)),
         ),
         filled: true,
-        fillColor: cs.surfaceContainerHighest.withValues(alpha: 0.3),
+        fillColor: const Color(0xFF131124),
       ),
     );
   }
 
-  Widget _buildDropdown(ColorScheme cs, String label, List<String> options, Function(String?) onChanged) {
+  Widget _buildDropdown(String label, List<String> options, Function(String?) onChanged) {
     return DropdownButtonFormField<String>(
+      dropdownColor: const Color(0xFF131124),
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(color: Colors.white54),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFF8070FF)),
         ),
         filled: true,
-        fillColor: cs.surfaceContainerHighest.withValues(alpha: 0.3),
+        fillColor: const Color(0xFF131124),
       ),
       items: options.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
       onChanged: onChanged,
     );
   }
 
-  Widget _buildDatePicker(ColorScheme cs) {
+  Widget _buildDatePicker() {
     return InkWell(
       onTap: () async {
         final date = await showDatePicker(
@@ -660,18 +858,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         if (date != null) setState(() => _selectedDate = date);
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest.withValues(alpha: 0.3),
+          color: const Color(0xFF131124),
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
         child: Row(
           children: [
-            Icon(Icons.calendar_today_rounded, size: 20, color: cs.onSurfaceVariant),
+            const Icon(Icons.calendar_today_rounded, size: 20, color: Colors.white54),
             const SizedBox(width: 8),
             Text(
               _selectedDate == null ? 'DOB' : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
-              style: TextStyle(color: _selectedDate == null ? cs.onSurfaceVariant : cs.onSurface),
+              style: TextStyle(color: _selectedDate == null ? Colors.white54 : Colors.white),
             ),
           ],
         ),
@@ -680,16 +879,547 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-class OnboardingSlide {
-  final String title;
-  final String description;
-  final IconData icon;
-  final Color color;
+// Custom Graphic widgets for high-fidelity animations
+class _OrbitingCardsGraphic extends StatefulWidget {
+  const _OrbitingCardsGraphic({super.key});
 
-  const OnboardingSlide({
-    required this.title,
-    required this.description,
-    required this.icon,
-    required this.color,
-  });
+  @override
+  State<_OrbitingCardsGraphic> createState() => _OrbitingCardsGraphicState();
+}
+
+class _OrbitingCardsGraphicState extends State<_OrbitingCardsGraphic> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 280,
+      width: double.infinity,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final angle = _controller.value * 2 * math.pi;
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              // Concentric background circles
+              ...List.generate(3, (index) {
+                final radius = 55.0 + index * 30.0;
+                return Container(
+                  width: radius * 2,
+                  height: radius * 2,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF8070FF).withValues(alpha: 0.05 + (index * 0.03)),
+                      width: 1.5,
+                    ),
+                  ),
+                );
+              }),
+              // Center Star Card
+              Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF131124),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: const Color(0xFF8070FF).withValues(alpha: 0.3),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF8070FF).withValues(alpha: 0.2),
+                      blurRadius: 24,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.star_rounded,
+                  color: Color(0xFF8070FF),
+                  size: 44,
+                ),
+              ),
+              // Orbiting Card 1: Level 8 (at angle + 0)
+              _buildOrbitingCard(
+                angle: angle,
+                radius: 100,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF131124),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.38), blurRadius: 10)],
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Level 8',
+                        style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        '340 / 500 XP',
+                        style: TextStyle(color: Colors.white38, fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Orbiting Card 2: 12 streak (at angle + 2*pi/3)
+              _buildOrbitingCard(
+                angle: angle + (2 * math.pi / 3),
+                radius: 95,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF131124),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.38), blurRadius: 10)],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.circle, color: Colors.amber, size: 8),
+                      SizedBox(width: 6),
+                      Text(
+                        '🔥 12 streak',
+                        style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Orbiting Card 3: +50 XP (at angle + 4*pi/3)
+              _buildOrbitingCard(
+                angle: angle + (4 * math.pi / 3),
+                radius: 90,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF131124),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.38), blurRadius: 10)],
+                  ),
+                  child: const Text(
+                    '⚡ +50 XP',
+                    style: TextStyle(color: Color(0xFF8070FF), fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildOrbitingCard({
+    required double angle,
+    required double radius,
+    required Widget child,
+  }) {
+    // We compute the X and Y coordinates on a slightly elliptical circle for better visual depth
+    final double x = radius * 1.35 * math.cos(angle);
+    final double y = radius * 0.85 * math.sin(angle);
+    return Transform.translate(
+      offset: Offset(x, y),
+      child: child,
+    );
+  }
+}
+
+class _TasksGraphic extends StatefulWidget {
+  const _TasksGraphic({super.key});
+
+  @override
+  State<_TasksGraphic> createState() => _TasksGraphicState();
+}
+
+class _TasksGraphicState extends State<_TasksGraphic> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _progressAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat(reverse: true);
+
+    _progressAnimation = Tween<double>(begin: 0.4, end: 0.68).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Level Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF131124),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF231E47),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.star_rounded, color: Color(0xFF8070FF), size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Level 7 → 8',
+                        style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        '340 / 500 XP earned today',
+                        style: TextStyle(color: Colors.white38, fontSize: 12),
+                      ),
+                      const SizedBox(height: 8),
+                      // Animated Progress Bar
+                      AnimatedBuilder(
+                        animation: _progressAnimation,
+                        builder: (context, child) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: _progressAnimation.value,
+                              backgroundColor: Colors.white.withValues(alpha: 0.08),
+                              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8070FF)),
+                              minHeight: 6,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Tasks Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF131124),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: Column(
+              children: [
+                _buildTaskRow('Morning workout', '+50 XP', true),
+                const Divider(color: Colors.white10, height: 20),
+                _buildTaskRow('Drink 2L water', '+20 XP', true),
+                const Divider(color: Colors.white10, height: 20),
+                _buildTaskRow('Read 30 minutes', '+30 XP', false),
+                const Divider(color: Colors.white10, height: 20),
+                _buildTaskRow('Study session', '+60 XP', false),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTaskRow(String title, String xp, bool completed) {
+    return Row(
+      children: [
+        Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: completed ? const Color(0xFF8070FF) : Colors.transparent,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: completed ? const Color(0xFF8070FF) : Colors.white24,
+              width: 2,
+            ),
+          ),
+          child: completed ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              color: completed ? Colors.white38 : Colors.white,
+              fontSize: 14,
+              decoration: completed ? TextDecoration.lineThrough : null,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Text(
+          xp,
+          style: TextStyle(
+            color: completed ? Colors.white38 : const Color(0xFF8070FF),
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LeaderboardGraphic extends StatelessWidget {
+  const _LeaderboardGraphic({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF131124),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'THIS WEEK',
+                style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+              ),
+              Text(
+                'Resets Monday',
+                style: TextStyle(color: Colors.white30, fontSize: 10),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildLeaderboardRow(1, 'Alex K.', '18 day streak', '4,200', '↑ +380 today', Colors.amber, 0),
+          const SizedBox(height: 12),
+          _buildLeaderboardRow(2, 'You', '12 day streak', '3,840', '↑ +340 today', const Color(0xFF8070FF), 1, isMe: true),
+          const SizedBox(height: 12),
+          _buildLeaderboardRow(3, 'Priya R.', '9 day streak', '3,210', '↑ +210 today', Colors.white70, 2),
+          const SizedBox(height: 12),
+          _buildLeaderboardRow(4, 'Marcus R.', '5 day streak', '2,980', '↓ -80 today', Colors.white38, 3, isDown: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLeaderboardRow(
+    int rank,
+    String name,
+    String streak,
+    String xp,
+    String todayXp,
+    Color rankColor,
+    int delayIndex, {
+    bool isMe = false,
+    bool isDown = false,
+  }) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 24,
+          child: Text(
+            '$rank',
+            style: TextStyle(color: rankColor, fontSize: 16, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(width: 12),
+        CircleAvatar(
+          radius: 18,
+          backgroundColor: isMe ? const Color(0xFF231E47) : Colors.white10,
+          child: Text(
+            name.substring(0, 2),
+            style: TextStyle(color: isMe ? const Color(0xFF8070FF) : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: isMe ? FontWeight.bold : FontWeight.w600),
+                  ),
+                  if (isMe) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF231E47),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text('you', style: TextStyle(color: Color(0xFF8070FF), fontSize: 10, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '🔥 $streak',
+                style: const TextStyle(color: Colors.white38, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              xp,
+              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              todayXp,
+              style: TextStyle(color: isDown ? Colors.redAccent : Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ],
+    ).animate().fadeIn(delay: (delayIndex * 150).ms, duration: 400.ms).slideX(begin: 0.1, end: 0);
+  }
+}
+
+class _ClimbGraphic extends StatefulWidget {
+  const _ClimbGraphic({super.key});
+
+  @override
+  State<_ClimbGraphic> createState() => _ClimbGraphicState();
+}
+
+class _ClimbGraphicState extends State<_ClimbGraphic> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _arrowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+
+    _arrowAnimation = Tween<double>(begin: 30.0, end: -40.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 220,
+      width: double.infinity,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Concentric circles
+          ...List.generate(3, (index) {
+            final radius = 45.0 + index * 30.0;
+            return Container(
+              width: radius * 2,
+              height: radius * 2,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFF8070FF).withValues(alpha: 0.05 + (index * 0.03)),
+                  width: 1.5,
+                ),
+              ),
+            );
+          }),
+          // Central dot
+          Container(
+            width: 12,
+            height: 12,
+            decoration: const BoxDecoration(
+              color: Color(0xFF8070FF),
+              shape: BoxShape.circle,
+            ),
+          ),
+          // Animated rising arrow
+          AnimatedBuilder(
+            animation: _arrowAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(0, _arrowAnimation.value),
+                child: Opacity(
+                  // Fade out as it reaches the top
+                  opacity: ((_arrowAnimation.value + 40) / 70.0).clamp(0.0, 1.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.keyboard_arrow_up_rounded, color: Color(0xFF8070FF), size: 36),
+                      SizedBox(
+                        width: 2,
+                        height: 20,
+                        child: ColoredBox(color: Color(0xFF8070FF)),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
