@@ -1,0 +1,5 @@
+• Redesigned onboarding screens with animated graphics
+• Redesigned login screen with premium dark theme
+• Smooth glide-up entrance animations
+• Improved profile screen snapping behavior
+• Polished screen transitions & micro-animations

@@ -96,8 +96,6 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _isOtpSent = true);
         _startTimer();
       } else {
-        // In a real app, you'd parse the status code or error body
-        // For now, we'll show a helpful message suggesting registration
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('User not found. Please register first via the Onboarding screen.'),
@@ -136,7 +134,6 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (user != null) {
-        // Success: Update AuthCubit and refresh data
         context.read<AuthCubit>().login(user);
         context.read<OnboardingCubit>().completeOnboarding();
         
@@ -144,8 +141,6 @@ class _LoginScreenState extends State<LoginScreen> {
         context.read<TaskCubit>().loadTasks();
         context.read<LeaderboardCubit>().loadLeaderboard();
         
-        // If this screen was pushed from Onboarding, pop it.
-        // The root app home will now transition to AppBottomNav.
         if (mounted && Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
         }
@@ -162,17 +157,18 @@ class _LoginScreenState extends State<LoginScreen> {
     final cs = Theme.of(context).colorScheme;
     
     return Scaffold(
+      backgroundColor: const Color(0xFF07050F),
       body: Stack(
         children: [
-          // Background
+          // Background Gradient
           Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+            decoration: const BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment(0.0, -0.6),
+                radius: 1.2,
                 colors: [
-                  cs.primary.withValues(alpha: 0.05),
-                  cs.surface,
+                  Color(0xFF1E173C),
+                  Color(0xFF07050F),
                 ],
               ),
             ),
@@ -180,218 +176,274 @@ class _LoginScreenState extends State<LoginScreen> {
           
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 30),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (Navigator.canPop(context))
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      style: IconButton.styleFrom(
-                        backgroundColor: cs.surfaceContainerHighest.withValues(alpha: 0.3),
-                      ),
-                    )
-                  else
-                    const SizedBox(height: 48), // Spacer to maintain consistent layout
-                  const SizedBox(height: 40),
-                  
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 500),
-                    child: _isOtpSent ? _buildOtpView(cs) : _buildEmailView(cs),
+                  const SizedBox(height: 36), // Small header spacing
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 350),
+                      switchInCurve: Curves.easeIn,
+                      switchOutCurve: Curves.easeOut,
+                      layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                        return Stack(
+                          alignment: Alignment.topCenter,
+                          children: <Widget>[
+                            ...previousChildren,
+                            if (currentChild != null) currentChild,
+                          ],
+                        );
+                      },
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        );
+                      },
+                      child: _isOtpSent ? _buildOtpView(cs) : _buildEmailView(cs),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
+
+          // Top Left Back Navigation Button
+          if (Navigator.canPop(context))
+            Positioned(
+              top: 20,
+              left: 16,
+              child: SafeArea(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white70, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ),
+            ),
           
           if (_isLoading)
-            const SizedBox.shrink(), // Removed full-screen loader overlay
+            Container(
+              color: Colors.black54,
+              child: const Center(
+                child: CircularProgressIndicator(color: Color(0xFF8070FF)),
+              ),
+            ),
         ],
       ),
     );
   }
 
   Widget _buildEmailView(ColorScheme cs) {
-    return Column(
-      key: const ValueKey('email_view'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Welcome Back',
-          style: GoogleFonts.outfit(
-            fontSize: 32,
-            fontWeight: FontWeight.w800,
-            color: cs.onSurface,
-          ),
-        ).animate().fadeIn().slideX(begin: -0.1, end: 0),
-        const SizedBox(height: 8),
-        Text(
-          'Enter your email to receive a verification code.',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: cs.onSurfaceVariant,
-          ),
-        ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.1, end: 0),
-        const SizedBox(height: 48),
-        
-        TextField(
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
-            labelText: 'Email Address',
-            prefixIcon: const Icon(Icons.email_outlined),
-            filled: true,
-            fillColor: cs.surfaceContainerHighest.withValues(alpha: 0.3),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.95, 0.95)),
-        
-        const SizedBox(height: 32),
-        
-        SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: ElevatedButton(
-            onPressed: _handleSendOtp,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: cs.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+      child: SingleChildScrollView(
+        key: const ValueKey('email_view'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RichText(
+              textAlign: TextAlign.left,
+              text: TextSpan(
+                style: GoogleFonts.outfit(
+                  fontSize: 42,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.1,
+                ),
+                children: const [
+                  TextSpan(text: 'Welcome\n'),
+                  TextSpan(
+                    text: 'back.',
+                    style: TextStyle(color: Color(0xFF8070FF)),
+                  ),
+                ],
               ),
-              elevation: 0,
             ),
-            child: _isLoading 
-              ? const SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                )
-              : const Text(
+            const SizedBox(height: 12),
+            const Text(
+              'Enter your email to receive a verification code.',
+              style: TextStyle(color: Colors.white54, fontSize: 16, height: 1.4),
+            ),
+            const SizedBox(height: 40),
+            
+            TextField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Email Address',
+                labelStyle: const TextStyle(color: Colors.white54),
+                prefixIcon: const Icon(Icons.email_outlined, color: Colors.white54),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFF8070FF)),
+                ),
+                filled: true,
+                fillColor: const Color(0xFF131124),
+              ),
+            ),
+            
+            const SizedBox(height: 32),
+            
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _handleSendOtp,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8070FF),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
                   'Send Verification Code',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-          ),
-        ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
-        
-        if (!Navigator.canPop(context)) ...[
-          const SizedBox(height: 24),
-          Center(
-            child: TextButton(
-              onPressed: () {
-                context.read<OnboardingCubit>().resetOnboarding();
-              },
-              child: RichText(
-                text: TextSpan(
-                  style: TextStyle(color: cs.onSurfaceVariant, fontSize: 15),
-                  children: [
-                    const TextSpan(text: "Don't have an account? "),
-                    TextSpan(
-                      text: 'Create one',
-                      style: TextStyle(
-                        color: cs.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
-          ).animate().fadeIn(delay: 400.ms),
-        ],
-      ],
-    );
+            
+            if (!Navigator.canPop(context)) ...[
+              const SizedBox(height: 24),
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    context.read<OnboardingCubit>().resetOnboarding();
+                  },
+                  child: RichText(
+                    text: const TextSpan(
+                      style: TextStyle(color: Colors.white54, fontSize: 15),
+                      children: [
+                        TextSpan(text: "Don't have an account? "),
+                        TextSpan(
+                          text: 'Create one',
+                          style: TextStyle(
+                            color: Color(0xFF8070FF),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.6, end: 0, curve: Curves.easeOutCubic);
   }
 
   Widget _buildOtpView(ColorScheme cs) {
-    return Column(
-      key: const ValueKey('otp_view'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Verify Email',
-          style: GoogleFonts.outfit(
-            fontSize: 32,
-            fontWeight: FontWeight.w800,
-            color: cs.onSurface,
-          ),
-        ).animate().fadeIn().slideX(begin: -0.1, end: 0),
-        const SizedBox(height: 8),
-        RichText(
-          text: TextSpan(
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: cs.onSurfaceVariant,
-            ),
-            children: [
-              const TextSpan(text: 'We\'ve sent a 6-digit code to '),
-              TextSpan(
-                text: _emailController.text,
-                style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold),
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+      child: SingleChildScrollView(
+        key: const ValueKey('otp_view'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RichText(
+              textAlign: TextAlign.left,
+              text: TextSpan(
+                style: GoogleFonts.outfit(
+                  fontSize: 42,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.1,
+                ),
+                children: const [
+                  TextSpan(text: 'Verify\n'),
+                  TextSpan(
+                    text: 'email.',
+                    style: TextStyle(color: Color(0xFF8070FF)),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.1, end: 0),
-        const SizedBox(height: 48),
-        
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(6, (index) => _buildOtpDigitField(index, cs)),
-        ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.9, 0.9)),
-        
-        const SizedBox(height: 32),
-        
-        SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: ElevatedButton(
-            onPressed: _handleVerifyOtp,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: cs.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 0,
             ),
-            child: _isLoading
-              ? const SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                )
-              : const Text(
+            const SizedBox(height: 12),
+            RichText(
+              text: TextSpan(
+                style: const TextStyle(color: Colors.white54, fontSize: 16, height: 1.4),
+                children: [
+                  const TextSpan(text: 'We\'ve sent a 6-digit code to '),
+                  TextSpan(
+                    text: _emailController.text,
+                    style: const TextStyle(color: Color(0xFF8070FF), fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 40),
+            
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(6, (index) => _buildOtpDigitField(index, cs)),
+            ),
+            
+            const SizedBox(height: 32),
+            
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _handleVerifyOtp,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8070FF),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
                   'Verify & Login',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-          ),
-        ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
-        
-        const SizedBox(height: 24),
-        
-        Center(
-          child: TextButton(
-            onPressed: _timerSeconds == 0 ? _handleSendOtp : null,
-            child: Text(
-              _timerSeconds == 0 
-                ? 'Resend Code' 
-                : 'Resend in ${_timerSeconds}s',
-              style: TextStyle(
-                color: _timerSeconds == 0 ? cs.primary : cs.onSurfaceVariant,
-                fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-        ).animate().fadeIn(delay: 400.ms),
-      ],
-    );
+            
+            const SizedBox(height: 24),
+            
+            Center(
+              child: TextButton(
+                onPressed: _timerSeconds == 0 ? _handleSendOtp : null,
+                child: Text(
+                  _timerSeconds == 0 
+                    ? 'Resend Code' 
+                    : 'Resend in ${_timerSeconds}s',
+                  style: TextStyle(
+                    color: _timerSeconds == 0 ? const Color(0xFF8070FF) : Colors.white38,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.6, end: 0, curve: Curves.easeOutCubic);
   }
 
   Widget _buildOtpDigitField(int index, ColorScheme cs) {
     return SizedBox(
-      width: 50,
+      width: 48,
       height: 60,
       child: TextField(
         controller: _otpControllers[index],
@@ -399,18 +451,22 @@ class _LoginScreenState extends State<LoginScreen> {
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
         maxLength: 1,
-        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
         decoration: InputDecoration(
           counterText: '',
           filled: true,
-          fillColor: cs.surfaceContainerHighest.withValues(alpha: 0.3),
+          fillColor: const Color(0xFF131124),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: cs.primary, width: 2),
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFF8070FF), width: 2),
           ),
         ),
         onChanged: (value) {
