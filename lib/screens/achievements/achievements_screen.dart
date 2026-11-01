@@ -81,6 +81,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(width: double.infinity),
             _AchievementIcon(achievement: achievement, size: 76),
             const SizedBox(height: 16),
             Text(
