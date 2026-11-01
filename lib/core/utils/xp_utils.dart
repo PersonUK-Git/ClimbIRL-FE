@@ -51,6 +51,14 @@ class XPUtils {
     return xpProgressInLevel(totalXP) / total;
   }
 
+  /// Progress fraction (0.0 to 1.0) of the whole climb, from level 1 to the top.
+  static double ascentProgress(int totalXP) {
+    final level = getLevel(totalXP);
+    if (level >= AppConstants.maxLevel) return 1.0;
+    final levelsClimbed = (level - 1) + xpProgressInLevel(totalXP) / xpForCurrentLevel(totalXP);
+    return levelsClimbed / (AppConstants.maxLevel - 1);
+  }
+
   /// XP remaining to reach next level.
   static int xpToNextLevel(int totalXP) {
     final total = xpForCurrentLevel(totalXP);

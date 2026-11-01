@@ -1,18 +1,18 @@
+import 'dart:math';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/theme/app_colors.dart';
 import '../../cubits/profile/profile_cubit.dart';
 import '../../cubits/profile/profile_state.dart';
-import 'widgets/xp_progress_card.dart';
+import '../../widgets/climb_ui.dart';
 import 'widgets/daily_streak_card.dart';
+import 'widgets/dashboard_skeleton.dart';
 import 'widgets/quick_stats_row.dart';
 import 'widgets/today_tasks_section.dart';
-import 'widgets/dashboard_skeleton.dart';
-import 'package:confetti/confetti.dart';
-import 'dart:math';
-import 'package:flutter/services.dart';
-import '../../core/theme/app_colors.dart';
-
+import 'widgets/xp_progress_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -59,127 +59,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
           bottom: false,
           child: Stack(
             children: [
-              CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Greeting
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Greeting
+                    Row(
+                      children: [
+                        UserAvatar(
+                          name: state.user.name,
+                          url: state.user.avatarUrl,
+                          size: 42,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _getGreeting(),
-                                    style: tt.bodyMedium?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    state.user.name.split(' ').first,
-                                    style: tt.headlineMedium?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              // Avatar
-                              CircleAvatar(
-                                radius: 22,
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.primaryContainer,
-                                backgroundImage: state.user.avatarUrl.isNotEmpty
-                                    ? NetworkImage(state.user.avatarUrl)
-                                    : null,
-                                child: state.user.avatarUrl.isEmpty
-                                    ? Text(
-                                        state.user.name.isNotEmpty
-                                            ? state.user.name[0].toUpperCase()
-                                            : 'U',
-                                        style: tt.titleMedium?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onPrimaryContainer,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      )
-                                    : null,
+                              MutedLabel(_getGreeting()),
+                              const SizedBox(height: 1),
+                              Text(
+                                state.user.name.split(' ').first,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: tt.titleMedium,
                               ),
                             ],
-                          ).animate().fadeIn(duration: 400.ms).slideY(
-                                begin: -0.1,
-                                end: 0,
-                                duration: 400.ms,
-                                curve: Curves.easeOut,
-                              ),
-
-                          const SizedBox(height: 20),
-
-                          // XP Progress Card
-                          const XPProgressCard()
-                              .animate()
-                              .fadeIn(delay: 100.ms, duration: 500.ms)
-                              .slideY(
-                                begin: 0.05,
-                                end: 0,
-                                delay: 100.ms,
-                                duration: 500.ms,
-                                curve: Curves.easeOut,
-                              ),
-
-                          const SizedBox(height: 16),
-
-                          // Daily Streak
-                          const DailyStreakCard()
-                              .animate()
-                              .fadeIn(delay: 200.ms, duration: 500.ms)
-                              .slideY(
-                                begin: 0.05,
-                                end: 0,
-                                delay: 200.ms,
-                                duration: 500.ms,
-                                curve: Curves.easeOut,
-                              ),
-
-                          const SizedBox(height: 16),
-
-                          // Quick Stats
-                          const QuickStatsRow()
-                              .animate()
-                              .fadeIn(delay: 300.ms, duration: 500.ms)
-                              .slideY(
-                                begin: 0.05,
-                                end: 0,
-                                delay: 300.ms,
-                                duration: 500.ms,
-                                curve: Curves.easeOut,
-                              ),
-
-                          const SizedBox(height: 20),
-
-                          // Today Tasks
-                          TodayTasksSection(onCompleted: _celebrate)
-                              .animate()
-                              .fadeIn(delay: 400.ms, duration: 500.ms),
-
-                          const SizedBox(height: 24),
-                        ],
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 100),
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 30),
+                    const XPProgressCard(),
+                    const SizedBox(height: 26),
+                    const QuickStatsRow(),
+                    const SizedBox(height: 10),
+                    const DailyStreakCard(),
+                    const SizedBox(height: 10),
+                    TodayTasksSection(onCompleted: _celebrate),
+                  ],
+                ),
+              ).animate().fadeIn(duration: 250.ms),
               // Confetti overlay
               Align(
                 alignment: Alignment.topCenter,
@@ -189,16 +110,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   maxBlastForce: 5,
                   minBlastForce: 2,
                   emissionFrequency: 0.05,
-                  numberOfParticles: 20,
+                  numberOfParticles: 14,
                   gravity: 0.1,
-                  colors: const [
-                    Colors.green,
-                    Colors.blue,
-                    Colors.pink,
-                    Colors.orange,
-                    Colors.purple,
-                    AppColors.xpGold,
-                  ],
+                  colors: AppColors.confetti,
                 ),
               ),
             ],
@@ -210,8 +124,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning 👋';
-    if (hour < 17) return 'Good Afternoon ☀️';
-    return 'Good Evening 🌙';
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
   }
 }

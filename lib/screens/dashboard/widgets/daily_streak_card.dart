@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../cubits/profile/profile_cubit.dart';
 import '../../../cubits/profile/profile_state.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../widgets/climb_ui.dart';
 
 class DailyStreakCard extends StatelessWidget {
   const DailyStreakCard({super.key});
@@ -15,104 +15,58 @@ class DailyStreakCard extends StatelessWidget {
     return BlocBuilder<ProfileCubit, ProfileState>(
       builder: (context, state) {
         final user = state.user;
-        final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+        const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+        final today = DateTime.now().weekday - 1;
 
-        return Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardTheme.color,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: cs.outlineVariant.withValues(alpha: 0.2),
-            ),
-          ),
+        return AppCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.streak.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.local_fire_department_rounded,
-                      color: AppColors.streak,
-                      size: 22,
+                  Expanded(
+                    child: Text(
+                      user.currentStreak == 1
+                          ? '1 day streak'
+                          : '${user.currentStreak} day streak',
+                      style: tt.titleMedium,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${user.currentStreak} Day Streak',
-                        style: tt.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        'Best: ${user.longestStreak} days',
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Icon(
-                    Icons.local_fire_department_rounded,
-                    color: AppColors.streak,
-                    size: 32,
-                  ),
+                  MutedLabel('Best ${user.longestStreak}'),
                 ],
               ),
               const SizedBox(height: 16),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(7, (index) {
                   final active = index < user.streakDays.length && user.streakDays[index];
-                  return Column(
-                    children: [
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: active
-                              ? AppColors.streak.withValues(alpha: 0.15)
-                              : cs.surfaceContainerHighest.withValues(alpha: 0.3),
-                          shape: BoxShape.circle,
-                          border: active
-                              ? Border.all(
-                                  color: AppColors.streak,
-                                  width: 2,
-                                )
-                              : null,
-                        ),
-                        child: Center(
+                  final isToday = index == today;
+
+                  return Expanded(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: active ? cs.onSurface : cs.surfaceContainerHighest,
+                            shape: BoxShape.circle,
+                            border: isToday && !active
+                                ? Border.all(color: cs.onSurface, width: 1.25)
+                                : null,
+                          ),
                           child: active
-                              ? Icon(
-                                  Icons.check_rounded,
-                                  size: 16,
-                                  color: AppColors.streak,
-                                )
+                              ? Icon(Icons.check_rounded, size: 16, color: cs.surface)
                               : null,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        days[index],
-                        style: tt.labelSmall?.copyWith(
-                          color: active
-                              ? AppColors.streak
-                              : cs.onSurfaceVariant,
-                          fontWeight:
-                              active ? FontWeight.w700 : FontWeight.w400,
+                        const SizedBox(height: 7),
+                        Text(
+                          days[index],
+                          style: tt.labelMedium?.copyWith(
+                            color: isToday ? cs.onSurface : cs.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   );
                 }),
               ),

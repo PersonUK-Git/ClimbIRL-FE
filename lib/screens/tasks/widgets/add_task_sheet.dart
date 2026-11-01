@@ -6,6 +6,7 @@ import '../../../cubits/profile/profile_state.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/task_model.dart';
+import '../../../widgets/climb_ui.dart';
 
 class AddTaskSheet extends StatefulWidget {
   const AddTaskSheet({super.key});
@@ -30,10 +31,10 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         20,
-        8,
+        0,
         20,
         MediaQuery.of(context).viewInsets.bottom + 20,
       ),
@@ -41,27 +42,8 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Token display
-          BlocBuilder<ProfileCubit, ProfileState>(
-            builder: (context, profileState) {
-              final tokens = profileState.user.tokens;
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildTokenHeaderItem('Easy', tokens['easy'] ?? 0, 'assets/token_easy.png'),
-                  _buildTokenHeaderItem('Medium', tokens['medium'] ?? 0, 'assets/token_medium.png'),
-                  _buildTokenHeaderItem('Hard', tokens['hard'] ?? 0, 'assets/token_hard.png'),
-                  _buildTokenHeaderItem('Epic', tokens['epic'] ?? 0, 'assets/token_epic.png'),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'New Task',
-            style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 20),
+          Text('New task', style: tt.headlineLarge),
+          const SizedBox(height: 18),
 
           // Title input
           TextField(
@@ -70,18 +52,14 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
             style: tt.bodyLarge,
             decoration: const InputDecoration(
               hintText: 'What do you want to accomplish?',
-              prefixIcon: Icon(Icons.edit_rounded),
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
           // Category
-          Text(
-            'Category',
-            style: tt.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
+          Text('Category', style: tt.titleSmall),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -90,27 +68,17 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
               return GestureDetector(
                 onTap: () => setState(() => _selectedCategory = category),
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
+                  duration: const Duration(milliseconds: 180),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? cs.primary.withValues(alpha: 0.12)
-                        : cs.surfaceContainerHighest.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isSelected
-                          ? cs.primary
-                          : cs.outlineVariant.withValues(alpha: 0.2),
-                      width: isSelected ? 1.5 : 1,
-                    ),
+                    color: isSelected ? cs.onSurface : cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(100),
                   ),
                   child: Text(
                     category,
                     style: tt.labelMedium?.copyWith(
-                      color: isSelected ? cs.primary : cs.onSurfaceVariant,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? cs.surface : cs.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -118,59 +86,47 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
             }).toList(),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
-          // Difficulty
-          Text(
-            'Difficulty',
-            style: tt.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
+          // Difficulty, each with the tokens the user has left
+          Text('Difficulty', style: tt.titleSmall),
+          const SizedBox(height: 10),
           BlocBuilder<ProfileCubit, ProfileState>(
             builder: (context, profileState) {
               final tokens = profileState.user.tokens;
+              final difficulties = AppConstants.difficulties;
               return Row(
-                children: AppConstants.difficulties.map((difficulty) {
+                children: List.generate(difficulties.length, (index) {
+                  final difficulty = difficulties[index];
                   final isSelected = _selectedDifficulty == difficulty;
-                  final color = AppColors.difficultyColor(difficulty);
-                  final xp = AppColors.difficultyXP(difficulty);
-                  
+                  final count = tokens[difficulty.toLowerCase()] ?? 0;
+
                   return Expanded(
                     child: GestureDetector(
                       onTap: () =>
                           setState(() => _selectedDifficulty = difficulty),
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.only(right: 8),
+                        duration: const Duration(milliseconds: 180),
+                        margin: EdgeInsets.only(left: index == 0 ? 0 : 8),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? color.withValues(alpha: 0.12)
-                              : cs.surfaceContainerHighest.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(12),
+                          color: cs.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(18),
                           border: Border.all(
-                            color: isSelected
-                                ? color
-                                : cs.outlineVariant.withValues(alpha: 0.2),
-                            width: isSelected ? 2 : 1,
+                            color: isSelected ? cs.onSurface : Colors.transparent,
+                            width: 1.5,
                           ),
                         ),
                         child: Column(
                           children: [
-                            Text(
-                              difficulty,
-                              style: tt.labelMedium?.copyWith(
-                                color: isSelected ? color : cs.onSurfaceVariant,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+                            DifficultyDots(difficulty: difficulty, dotSize: 6),
+                            const SizedBox(height: 10),
+                            Text(difficulty, style: tt.labelMedium?.copyWith(color: cs.onSurface)),
                             const SizedBox(height: 2),
                             Text(
-                              '${xp}XP',
-                              style: tt.labelSmall?.copyWith(
-                                color: isSelected
-                                    ? color.withValues(alpha: 0.7)
-                                    : cs.onSurfaceVariant.withValues(alpha: 0.5),
+                              '$count left',
+                              style: tt.bodySmall?.copyWith(
+                                color: cs.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -178,7 +134,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                       ),
                     ),
                   );
-                }).toList(),
+                }),
               );
             },
           ),
@@ -191,24 +147,15 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
               final tokens = profileState.user.tokens;
               final tokenKey = _selectedDifficulty.toLowerCase();
               final hasToken = (tokens[tokenKey] ?? 0) > 0;
-              
+
               return SizedBox(
                 width: double.infinity,
-                height: 52,
                 child: FilledButton(
                   onPressed: hasToken ? _addTask : null,
-                  style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
                   child: Text(
                     hasToken
-                        ? 'Add Task  ·  +${AppColors.difficultyXP(_selectedDifficulty)}XP'
-                        : 'No $_selectedDifficulty Tokens',
-                    style: tt.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                        ? 'Add task  ·  +${AppColors.difficultyXP(_selectedDifficulty)} XP'
+                        : 'No $_selectedDifficulty tokens',
                   ),
                 ),
               );
@@ -225,13 +172,11 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
     final profileCubit = context.read<ProfileCubit>();
     final tokens = profileCubit.state.user.tokens;
     final tokenKey = _selectedDifficulty.toLowerCase();
-    
+
     if ((tokens[tokenKey] ?? 0) <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('You do not have enough $_selectedDifficulty tokens!'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -260,29 +205,9 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to create task: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
           ),
         );
       }
     }
-  }
-
-  Widget _buildTokenHeaderItem(String type, int count, String assetPath) {
-    return Column(
-      children: [
-        Image.asset(assetPath, width: 32, height: 32),
-        const SizedBox(height: 4),
-        Text(
-          '$count',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          '$type Token',
-          style: const TextStyle(fontSize: 10, color: Colors.grey),
-        ),
-      ],
-    );
   }
 }

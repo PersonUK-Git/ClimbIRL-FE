@@ -1,6 +1,6 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:animated_scale_nav_bar/animated_scale_nav_bar.dart';
+import '../core/theme/app_colors.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/tasks/tasks_screen.dart';
 import '../screens/leaderboard/leaderboard_screen.dart';
@@ -38,7 +38,7 @@ class _AppBottomNavState extends State<AppBottomNav> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       extendBody: true,
@@ -54,63 +54,52 @@ class _AppBottomNavState extends State<AppBottomNav> {
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(35),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-            child: Container(
-              height: 80, // Package default height
-              decoration: BoxDecoration(
-                color: colorScheme.surface.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(35),
-                border: Border.all(
-                  color: colorScheme.onSurface.withValues(alpha: 0.12),
-                  width: 1.0,
-                ),
-              ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  const barHeight = 46.0;
-                  return Center(
-                    child: SizedBox(
-                      height: 80,
-                      child: MediaQuery(
-                        // Sync internal offsets with the actual bar width
-                        data: MediaQuery.of(context).copyWith(
-                          size: Size(constraints.maxWidth, 75),
-                        ),
-                        child: AnimatedNavBar(
-                          selectedIndex: _currentIndex,
-                          pageController: _pageController,
-                          backgroundColor: Colors.transparent,
-                          selectedItemColor: colorScheme.primary,
-                          unselectedItemColor:
-                              colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                          indicatorColor:
-                              colorScheme.primaryContainer.withValues(alpha: 0.25),
-                          icons: const [
-                            Icons.home_rounded,
-                            Icons.task_alt_rounded,
-                            Icons.leaderboard_rounded,
-                            Icons.person_rounded,
-                          ],
-                          onTabSelected: (index) {
-                            setState(() => _currentIndex = index);
-                            _pageController.animateToPage(
-                              index,
-                              duration: const Duration(milliseconds: 400),
-                              curve: Curves.easeInOutCubic,
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(35),
-                          height: barHeight,
-                          indicatorHeight: barHeight,
-                          indicatorWidth: 72,
-                          indicatorBorderRadius: BorderRadius.circular(25),
-                        ),
+          child: Container(
+            height: 80, // Package default height
+            color: isDark ? AppColors.navBarDark : AppColors.navBarLight,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const barHeight = 46.0;
+                return Center(
+                  child: SizedBox(
+                    height: 80,
+                    child: MediaQuery(
+                      // Sync internal offsets with the actual bar width
+                      data: MediaQuery.of(context).copyWith(
+                        size: Size(constraints.maxWidth, 75),
+                      ),
+                      child: AnimatedNavBar(
+                        selectedIndex: _currentIndex,
+                        pageController: _pageController,
+                        backgroundColor: Colors.transparent,
+                        selectedItemColor: AppColors.white,
+                        unselectedItemColor: AppColors.white.withValues(alpha: 0.5),
+                        indicatorColor: AppColors.white.withValues(alpha: 0.14),
+                        icons: const [
+                          Icons.home_rounded,
+                          Icons.task_alt_rounded,
+                          Icons.leaderboard_rounded,
+                          Icons.person_rounded,
+                        ],
+                        onTabSelected: (index) {
+                          setState(() => _currentIndex = index);
+                          _pageController.animateToPage(
+                            index,
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeInOutCubic,
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(35),
+                        height: barHeight,
+                        indicatorHeight: barHeight,
+                        indicatorWidth: 72,
+                        iconSize: 25,
+                        indicatorBorderRadius: BorderRadius.circular(25),
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
           ),
         ),
