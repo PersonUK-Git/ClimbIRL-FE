@@ -34,9 +34,9 @@ android {
     defaultConfig {
         // Application ID is now handled by product flavors
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = 12
-        versionName = "1.0.2"
+        targetSdk = 36
+        versionCode = 14
+        versionName = "1.0.3"
     }
 
     flavorDimensions += "version"
