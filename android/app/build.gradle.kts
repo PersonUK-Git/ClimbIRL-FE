@@ -33,7 +33,7 @@ android {
 
     defaultConfig {
         // Application ID is now handled by product flavors
-        minSdk = flutter.minSdkVersion
+        minSdk = 24
         targetSdk = 36
         versionCode = 15
         versionName = "1.0.3"
