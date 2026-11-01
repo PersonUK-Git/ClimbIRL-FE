@@ -5,15 +5,15 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../core/services/notification_service.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:fl_chart/fl_chart.dart';
+import '../../core/theme/app_text_styles.dart';
 import '../../cubits/profile/profile_cubit.dart';
 import '../../cubits/profile/profile_state.dart';
 import '../../cubits/theme/theme_cubit.dart';
 import '../../cubits/theme/theme_state.dart';
 import '../../cubits/auth/auth_cubit.dart';
 import '../../core/utils/xp_utils.dart';
+import '../../widgets/climb_ui.dart';
+import '../../widgets/dot_climb.dart';
 import '../../widgets/xp_bar.dart';
 import '../achievements/achievements_screen.dart';
 import '../../core/network/api_constants.dart';
@@ -21,6 +21,9 @@ import '../../data/repositories/api_repository.dart';
 import '../../cubits/onboarding/onboarding_cubit.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/user_model.dart';
+
+const double _headerMaxExtent = 228.0;
+const double _headerMinExtent = 72.0;
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -65,7 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               if (_isSnapping) return false;
               if (notification is ScrollEndNotification) {
                 final double offset = _scrollController.offset;
-                final double maxScroll = 328.0; // maxExtent (400.0) - minExtent (72.0)
+                const double maxScroll = _headerMaxExtent - _headerMinExtent;
                 if (offset > 0.5 && offset < maxScroll - 0.5) {
                   final double target = offset < maxScroll / 2 ? 0.0 : maxScroll;
                   _isSnapping = true;
@@ -101,285 +104,125 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     authCubit: context.read<AuthCubit>(),
                   ),
                 ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                  child: Column(
-                    children: [
-                      // Stats Grid
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _StatCard(
-                              icon: Icons.bolt_rounded,
-                              label: 'Total XP',
-                              value: '${user.totalXP}',
-                              color: Colors.amber,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _StatCard(
-                              icon: Icons.check_circle_rounded,
-                              label: 'Tasks Done',
-                              value: '${user.tasksCompleted}',
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
-                      ).animate().fadeIn(delay: 200.ms, duration: 500.ms),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _StatCard(
-                              icon: Icons.local_fire_department_rounded,
-                              label: 'Streak',
-                              value: '${user.currentStreak}d',
-                              color: Colors.orange,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _StatCard(
-                              icon: Icons.emoji_events_rounded,
-                              label: 'Achievements',
-                              value: '${state.unlockedAchievements.length}',
-                              color: Colors.purple,
-                            ),
-                          ),
-                        ],
-                      ).animate().fadeIn(delay: 250.ms, duration: 500.ms),
-
-                      const SizedBox(height: 20),
-
-                      // XP History Chart
-                      Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardTheme.color,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: cs.outlineVariant.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'XP This Week',
-                              style: tt.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              height: 160,
-                              child: BarChart(
-                                BarChartData(
-                                  alignment: BarChartAlignment.spaceAround,
-                                  maxY:
-                                      (user.weeklyXP.isEmpty
-                                              ? 100
-                                              : user.weeklyXP.reduce(
-                                                      (a, b) => a > b ? a : b,
-                                                    ) *
-                                                    1.3)
-                                          .toDouble(),
-                                  barTouchData: BarTouchData(
-                                    touchTooltipData: BarTouchTooltipData(
-                                      getTooltipColor: (_) => cs.inverseSurface,
-                                      getTooltipItem:
-                                          (group, groupIndex, rod, rodIndex) {
-                                            return BarTooltipItem(
-                                              '${rod.toY.toInt()} XP',
-                                              tt.labelSmall!.copyWith(
-                                                color: cs.onInverseSurface,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            );
-                                          },
-                                    ),
-                                  ),
-                                  titlesData: FlTitlesData(
-                                    show: true,
-                                    bottomTitles: AxisTitles(
-                                      sideTitles: SideTitles(
-                                        showTitles: true,
-                                        getTitlesWidget: (value, meta) {
-                                          const days = [
-                                            'M',
-                                            'T',
-                                            'W',
-                                            'T',
-                                            'F',
-                                            'S',
-                                            'S',
-                                          ];
-                                          return Text(
-                                            days[value.toInt()],
-                                            style: tt.labelSmall?.copyWith(
-                                              color: cs.onSurfaceVariant,
-                                            ),
-                                          );
-                                        },
-                                        reservedSize: 20,
-                                      ),
-                                    ),
-                                    leftTitles: const AxisTitles(
-                                      sideTitles: SideTitles(showTitles: false),
-                                    ),
-                                    topTitles: const AxisTitles(
-                                      sideTitles: SideTitles(showTitles: false),
-                                    ),
-                                    rightTitles: const AxisTitles(
-                                      sideTitles: SideTitles(showTitles: false),
-                                    ),
-                                  ),
-                                  gridData: const FlGridData(show: false),
-                                  borderData: FlBorderData(show: false),
-                                  barGroups: List.generate(
-                                    7,
-                                    (index) => BarChartGroupData(
-                                      x: index,
-                                      barRods: [
-                                        BarChartRodData(
-                                          toY: user.weeklyXP[index].toDouble(),
-                                          color: index == 6
-                                              ? cs.primary
-                                              : cs.primary.withValues(
-                                                  alpha: 0.4,
-                                                ),
-                                          width: 20,
-                                          borderRadius:
-                                              const BorderRadius.vertical(
-                                                top: Radius.circular(6),
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ).animate().fadeIn(delay: 350.ms, duration: 500.ms),
-
-                      const SizedBox(height: 16),
-
-                      // Achievements section
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider.value(
-                                value: context.read<ProfileCubit>(),
-                                child: const AchievementsScreen(),
-                              ),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardTheme.color,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: cs.outlineVariant.withValues(alpha: 0.2),
-                            ),
-                          ),
-                          child: Row(
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Stats
+                        AppCard(
+                          child: Column(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.amber.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(
-                                  Icons.emoji_events_rounded,
-                                  color: Colors.amber,
-                                ),
+                              StatRow(
+                                stats: [
+                                  StatBlock(
+                                    value: formatNumber(user.totalXP),
+                                    label: 'Total XP',
+                                  ),
+                                  StatBlock(
+                                    value: formatNumber(user.tasksCompleted),
+                                    label: 'Tasks done',
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Achievements',
-                                      style: tt.titleSmall?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${state.unlockedAchievements.length} of ${state.achievements.length} unlocked',
-                                      style: tt.bodySmall?.copyWith(
-                                        color: cs.onSurfaceVariant,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                color: cs.onSurfaceVariant,
+                              const SizedBox(height: 18),
+                              StatRow(
+                                stats: [
+                                  StatBlock(
+                                    value: '${user.currentStreak}d',
+                                    label: 'Streak',
+                                  ),
+                                  StatBlock(
+                                    value: '${state.unlockedAchievements.length}',
+                                    label: 'Achievements',
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
-                      ).animate().fadeIn(delay: 450.ms, duration: 500.ms),
+                        const SizedBox(height: 10),
 
-                      const SizedBox(height: 20),
-
-                      // Settings & Legal Section
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 4, bottom: 12),
-                            child: Text(
-                              'Settings & Legal',
-                              style: tt.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: cs.primary,
+                        // XP History Chart
+                        AppCard(
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text('XP this week', style: tt.titleMedium),
+                                  ),
+                                  MutedLabel(
+                                    '${formatNumber(user.weeklyXP.fold<int>(0, (a, b) => a + b))} XP',
+                                  ),
+                                ],
                               ),
-                            ),
+                              const SizedBox(height: 18),
+                              DotWeekChart(weeklyXP: user.weeklyXP),
+                            ],
                           ),
-                          _MenuTile(
-                            icon: Icons.notifications_rounded,
-                            label: 'Notification Time',
-                            onTap: () => _showNotificationTimePicker(context),
+                        ),
+                        const SizedBox(height: 10),
+
+                        // Achievements section
+                        AppCard(
+                          padding: EdgeInsets.zero,
+                          child: _MenuTile(
+                            label: 'Achievements',
+                            detail:
+                                '${state.unlockedAchievements.length} of ${state.achievements.length}',
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => BlocProvider.value(
+                                    value: context.read<ProfileCubit>(),
+                                    child: const AchievementsScreen(),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                          _MenuTile(
-                            icon: Icons.description_rounded,
-                            label: 'Privacy Policy',
-                            onTap: () => _launchURL(ApiConstants.privacyPolicy),
+                        ),
+                        const SizedBox(height: 10),
+
+                        // Settings & Legal Section
+                        AppCard(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Column(
+                            children: [
+                              _MenuTile(
+                                label: 'Notification time',
+                                onTap: () => _showNotificationTimePicker(context),
+                              ),
+                              _MenuTile(
+                                label: 'Privacy policy',
+                                onTap: () => _launchURL(ApiConstants.privacyPolicy),
+                              ),
+                              _MenuTile(
+                                label: 'Terms of service',
+                                onTap: () => _launchURL(ApiConstants.termsOfService),
+                              ),
+                            ],
                           ),
-                          _MenuTile(
-                            icon: Icons.gavel_rounded,
-                            label: 'Terms of Service',
-                            onTap: () =>
-                                _launchURL(ApiConstants.termsOfService),
-                          ),
-                          _MenuTile(
-                            icon: Icons.delete_forever_rounded,
-                            label: 'Delete Account',
-                            color: Colors.red,
+                        ),
+                        const SizedBox(height: 10),
+                        AppCard(
+                          padding: EdgeInsets.zero,
+                          child: _MenuTile(
+                            label: 'Delete account',
+                            color: cs.error,
                             onTap: () => _showDeleteConfirmation(context),
                           ),
-                        ],
-                      ).animate().fadeIn(delay: 550.ms, duration: 500.ms),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
+        );
       },
     );
   }
@@ -405,10 +248,10 @@ class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
   });
 
   @override
-  double get maxExtent => 400.0;
+  double get maxExtent => _headerMaxExtent;
 
   @override
-  double get minExtent => 72.0;
+  double get minExtent => _headerMinExtent;
 
   @override
   Widget build(
@@ -417,218 +260,173 @@ class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     final double t = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
-    final width = MediaQuery.of(context).size.width;
+    final double detailsOpacity = (1.0 - t * 2.5).clamp(0.0, 1.0);
 
-    // Fade values
-    final double cardOpacity = (1.0 - t * 2.5).clamp(0.0, 1.0);
+    // The avatar stays on the left and shrinks into the collapsed top bar.
+    const double expandedRingSize = 84.0;
+    const double collapsedRingSize = 42.0;
+    final double ringSize = lerpDouble(expandedRingSize, collapsedRingSize, t)!;
+    final double avatarSize = ringSize - lerpDouble(14.0, 6.0, t)!;
+    final double avatarY = lerpDouble(68.0, 15.0, t)!;
 
-    // Avatar layout:
-    // Expanded diameter: 72, collapsed: 36 (radius 36 to 18)
-    // Expanded ring size: 88, collapsed: 44
-    final double expandedAvatarSize = 72.0;
-    final double collapsedAvatarSize = 36.0;
-    final double avatarSize =
-        expandedAvatarSize + (collapsedAvatarSize - expandedAvatarSize) * t;
-
-    final double expandedRingSize = 88.0;
-    final double collapsedRingSize = 44.0;
-    final double ringSize =
-        expandedRingSize + (collapsedRingSize - expandedRingSize) * t;
-
-    // Y position of avatar:
-    // Expanded: Y=92 (aligns with card top Y=72 + card padding top=20)
-    // Collapsed: Y=14 (centered in top bar)
-    final double avatarY = 92.0 + (14.0 - 92.0) * t;
-
-    // X position of avatar:
-    // Expanded: centered -> (width - ringSize) / 2
-    // Collapsed: left aligned -> 20
-    final double expandedAvatarX = (width - expandedRingSize) / 2;
-    final double collapsedAvatarX = 20.0;
-    final double avatarX =
-        expandedAvatarX + (collapsedAvatarX - expandedAvatarX) * t;
-
-    // "Profile" text layout:
-    // Expanded: X=20, Y=16
-    // Collapsed: X = 20 + collapsedRingSize (44) + 12 = 76, Y = 22 (centered with avatar Y=14 + ringSize/2=36)
-    final double expandedTextX = 20.0;
-    final double collapsedTextX = 20.0 + collapsedRingSize + 12.0;
-    final double textX = expandedTextX + (collapsedTextX - expandedTextX) * t;
-
-    final double expandedTextY = 16.0;
-    final double collapsedTextY = 22.0;
-    final double textY = expandedTextY + (collapsedTextY - expandedTextY) * t;
-
-    final double expandedFontSize = 28.0; // headlineMedium
-    final double collapsedFontSize = 20.0; // titleLarge
-    final double fontSize =
-        expandedFontSize + (collapsedFontSize - expandedFontSize) * t;
+    // "Profile" slides right to sit beside the small avatar.
+    final double textX = lerpDouble(20.0, 20.0 + collapsedRingSize + 12.0, t)!;
+    final double textY = lerpDouble(16.0, 20.0, t)!;
+    final double fontSize = lerpDouble(32.0, 22.0, t)!;
 
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Stack(
         children: [
-          // 1. Card containing user stats/info (fades out as we scroll)
-          if (cardOpacity > 0.0)
+          // Name, handle and level (fade out as we scroll)
+          if (detailsOpacity > 0.0) ...[
             Positioned(
-              left: 32,
-              right: 32,
-              top: 72,
+              left: 20 + expandedRingSize + 16,
+              right: 20,
+              top: 70,
               child: Opacity(
-                opacity: cardOpacity,
-                child: Container(
-                  padding: const EdgeInsets.all(
-                    20,
-                  ), // restored original card padding
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardTheme.color,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: cs.outlineVariant.withValues(alpha: 0.2),
+                opacity: detailsOpacity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.name,
+                      style: tt.headlineSmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  child: Column(
-                    children: [
-                      // Spacer matching the avatar + ring size and its original spacing
-                      const SizedBox(height: 88 + 14),
-                      Text(
-                        user.name,
-                        style: tt.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '@${user.username}',
-                        style: tt.bodyMedium?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      // Level badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [cs.primary, cs.tertiary],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '@${user.username}',
+                      style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _showEditProfileSheet(context, user),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Text(
-                          'Level ${user.level} · ${user.title}',
-                          style: tt.labelMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          'Edit profile',
+                          style: tt.labelLarge?.copyWith(color: cs.onSurface, decoration: TextDecoration.underline, decorationColor: cs.onSurfaceVariant),
                         ),
                       ),
-                      const SizedBox(height: 10), // restored original spacing
-                      OutlinedButton.icon(
-                        onPressed: () => _showEditProfileSheet(context, user),
-                        icon: const Icon(Icons.edit_rounded, size: 16),
-                        label: const Text('Edit Profile'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14), // restored original spacing
-                      XPBar(progress: progress, height: 8),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${user.totalXP} XP total · ${XPUtils.xpToNextLevel(user.totalXP)} to next level',
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-
-          // 2. Avatar + Level Ring (moves and scales)
-          Positioned(
-            left: avatarX,
-            top: avatarY,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: ringSize,
-                  height: ringSize,
-                  child: CircularProgressIndicator(
-                    value: progress,
-                    strokeWidth: lerpDouble(4.0, 2.0, t)!,
-                    backgroundColor: cs.surfaceContainerHighest.withValues(
-                      alpha: 0.3,
-                    ),
-                    valueColor: AlwaysStoppedAnimation(cs.primary),
-                  ),
-                ),
-                CircleAvatar(
-                  radius: avatarSize / 2,
-                  backgroundColor: cs.primaryContainer,
-                  backgroundImage: user.avatarUrl.isNotEmpty
-                      ? NetworkImage(user.avatarUrl)
-                      : null,
-                  child: user.avatarUrl.isEmpty
-                      ? Text(
-                          user.name.isNotEmpty
-                              ? user.name[0].toUpperCase()
-                              : 'U',
-                          style: tt.headlineSmall?.copyWith(
-                            color: cs.onPrimaryContainer,
-                            fontWeight: FontWeight.w700,
-                            fontSize: lerpDouble(24.0, 12.0, t)!,
+            Positioned(
+              left: 20,
+              right: 20,
+              top: 170,
+              child: Opacity(
+                opacity: detailsOpacity,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Level ${user.level}  ·  ${user.title}',
+                            style: tt.titleSmall,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        )
-                      : null,
+                        ),
+                        Text(
+                          XPUtils.xpToNextLevel(user.totalXP) > 0
+                              ? '${formatNumber(XPUtils.xpToNextLevel(user.totalXP))} XP to next'
+                              : 'Summit reached',
+                          style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    XPBar(progress: progress),
+                  ],
                 ),
-              ],
+              ),
+            ),
+          ],
+
+          // Avatar + level ring (moves and scales)
+          Positioned(
+            left: 20,
+            top: avatarY,
+            child: SizedBox(
+              width: ringSize,
+              height: ringSize,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox.expand(
+                    child: CircularProgressIndicator(
+                      value: progress,
+                      strokeWidth: lerpDouble(2.5, 2.0, t)!,
+                      backgroundColor: cs.surfaceContainerHighest,
+                      valueColor: AlwaysStoppedAnimation(cs.secondary),
+                    ),
+                  ),
+                  UserAvatar(
+                    name: user.name,
+                    url: user.avatarUrl,
+                    size: avatarSize,
+                  ),
+                ],
+              ),
             ),
           ),
 
-          // 3. "Profile" Title text (moves and shrinks)
+          // "Profile" title (moves and shrinks)
           Positioned(
             left: textX,
             top: textY,
             child: Text(
               'Profile',
-              style: tt.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                fontSize: fontSize,
-              ),
+              style: AppTextStyles.display(fontSize, color: cs.onSurface),
             ),
           ),
 
-          // 4. Action buttons (top right)
+          // Action buttons (top right)
           Positioned(
-            right: 20,
+            right: 8,
             top: 12,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Theme toggle
+                IconButton(
+                  tooltip: 'Change theme',
+                  onPressed: () => themeCubit.toggleTheme(),
+                  icon: BlocBuilder<ThemeCubit, ThemeState>(
+                    bloc: themeCubit,
+                    builder: (context, themeState) {
+                      final isDark = Theme.of(context).brightness == Brightness.dark;
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: Icon(
+                          isDark
+                              ? Icons.light_mode_outlined
+                              : Icons.dark_mode_outlined,
+                          key: ValueKey(isDark),
+                          color: cs.onSurfaceVariant,
+                        ),
+                      );
+                    },
+                  ),
+                ),
                 // Logout button
                 IconButton(
+                  tooltip: 'Log out',
                   onPressed: () {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text('Logout'),
-                        content: const Text('Are you sure you want to logout?'),
+                        title: const Text('Log out?'),
+                        content: const Text('Are you sure you want to log out?'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
@@ -639,43 +437,21 @@ class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
                               Navigator.pop(context);
                               authCubit.logout();
                             },
-                            child: const Text(
-                              'Logout',
-                              style: TextStyle(color: Colors.red),
+                            child: Text(
+                              'Log out',
+                              style: TextStyle(color: cs.error),
                             ),
                           ),
                         ],
                       ),
                     );
                   },
-                  icon: const Icon(Icons.logout_rounded, color: Colors.grey),
-                ),
-                // Theme toggle
-                IconButton(
-                  onPressed: () => themeCubit.toggleTheme(),
-                  icon: BlocBuilder<ThemeCubit, ThemeState>(
-                    bloc: themeCubit,
-                    builder: (context, themeState) {
-                      final isDark =
-                          themeState.themeMode == ThemeMode.dark ||
-                          (themeState.themeMode == ThemeMode.system &&
-                              MediaQuery.of(context).platformBrightness ==
-                                  Brightness.dark);
-                      return AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        child: Icon(
-                          isDark
-                              ? Icons.light_mode_rounded
-                              : Icons.dark_mode_rounded,
-                          key: ValueKey(isDark),
-                        ),
-                      );
-                    },
-                  ),
+                  icon: Icon(Icons.logout_rounded, color: cs.onSurfaceVariant),
                 ),
               ],
             ),
           ),
+
         ],
       ),
     );
@@ -691,15 +467,15 @@ class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
 }
 
 class _MenuTile extends StatelessWidget {
-  final IconData icon;
   final String label;
+  final String? detail;
   final VoidCallback onTap;
   final Color? color;
 
   const _MenuTile({
-    required this.icon,
     required this.label,
     required this.onTap,
+    this.detail,
     this.color,
   });
 
@@ -708,43 +484,28 @@ class _MenuTile extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(12),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: cs.outlineVariant.withValues(alpha: 0.1),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: tt.titleSmall?.copyWith(fontSize: 15, color: color),
               ),
-              borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
-              children: [
-                Icon(icon, size: 20, color: color ?? cs.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: tt.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.5),
-                ),
-              ],
+            if (detail != null) ...[
+              MutedLabel(detail!),
+              const SizedBox(width: 6),
+            ],
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: color ?? cs.onSurfaceVariant,
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -814,10 +575,12 @@ void _showNotificationTimePicker(BuildContext context) async {
 }
 
 void _showDeleteConfirmation(BuildContext context) {
+  final cs = Theme.of(context).colorScheme;
+
   showDialog(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      title: const Text('Delete Account'),
+      title: const Text('Delete account?'),
       content: const Text(
         'Are you absolutely sure? This will permanently delete your account, '
         'all your XP, levels, and task history. This action cannot be undone.',
@@ -827,7 +590,7 @@ void _showDeleteConfirmation(BuildContext context) {
           onPressed: () => Navigator.pop(dialogContext),
           child: const Text('Cancel'),
         ),
-        FilledButton(
+        TextButton(
           onPressed: () async {
             Navigator.pop(dialogContext);
             // Show loading
@@ -856,77 +619,18 @@ void _showDeleteConfirmation(BuildContext context) {
               );
             }
           },
-          style: FilledButton.styleFrom(backgroundColor: Colors.red),
-          child: const Text('Delete Permanently'),
+          style: TextButton.styleFrom(foregroundColor: cs.error),
+          child: const Text('Delete permanently'),
         ),
       ],
     ),
   );
 }
 
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              Text(
-                label,
-                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 void _showEditProfileSheet(BuildContext context, UserModel user) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
     builder: (_) => BlocProvider.value(
       value: context.read<ProfileCubit>(),
       child: _EditProfileSheet(user: user),
@@ -1042,24 +746,21 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   void _showImagePickerOptions() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt_rounded),
-              title: const Text('Take a Photo'),
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Take a photo'),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_rounded),
-              title: const Text('Choose from Gallery'),
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Choose from gallery'),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);
@@ -1095,16 +796,12 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       if (success) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully! 🎉'),
-            behavior: SnackBarBehavior.floating,
-          ),
+          const SnackBar(content: Text('Profile updated')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to update profile. Please try again.'),
-            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -1118,9 +815,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
 
     return Padding(
       padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 24,
+        left: 20,
+        right: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       child: Form(
@@ -1128,29 +824,18 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Edit Profile',
-                style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 24),
+              Text('Edit profile', style: tt.headlineMedium),
+              const SizedBox(height: 20),
               GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: _showImagePickerOptions,
-                child: Stack(
-                  alignment: Alignment.center,
+                child: Row(
                   children: [
                     CircleAvatar(
-                      radius: 50,
-                      backgroundColor: cs.primaryContainer,
+                      radius: 36,
+                      backgroundColor: cs.surfaceContainerHighest,
                       backgroundImage: _pickedImage != null
                           ? FileImage(_pickedImage!)
                           : (widget.user.avatarUrl.isNotEmpty
@@ -1163,57 +848,36 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                               widget.user.name.isNotEmpty
                                   ? widget.user.name[0].toUpperCase()
                                   : 'U',
-                              style: tt.headlineLarge?.copyWith(
-                                color: cs.onPrimaryContainer,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: AppTextStyles.display(28, color: cs.onSurface),
                             )
                           : null,
                     ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: cs.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: cs.surface, width: 2),
-                        ),
-                        child: Icon(
-                          Icons.camera_alt_rounded,
-                          size: 16,
-                          color: cs.onPrimary,
-                        ),
-                      ),
+                    const SizedBox(width: 16),
+                    Text(
+                      'Change photo',
+                      style: tt.labelLarge?.copyWith(color: cs.onSurface),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 22),
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Name',
-                  prefixIcon: const Icon(Icons.person_rounded),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                decoration: const InputDecoration(labelText: 'Name'),
                 validator: (val) => val == null || val.trim().isEmpty
                     ? 'Name cannot be empty'
                     : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               TextFormField(
                 controller: _usernameController,
                 onChanged: _onUsernameChanged,
                 decoration: InputDecoration(
                   labelText: 'Username',
-                  prefixIcon: const Icon(Icons.alternate_email_rounded),
+                  prefixText: '@',
                   suffixIcon: _isCheckingUsername
                       ? const Padding(
-                          padding: EdgeInsets.all(12.0),
+                          padding: EdgeInsets.all(14.0),
                           child: SizedBox(
                             width: 20,
                             height: 20,
@@ -1223,44 +887,40 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                       : (_isUsernameAvailable != null
                             ? Icon(
                                 _isUsernameAvailable!
-                                    ? Icons.check_circle_rounded
-                                    : Icons.cancel_rounded,
+                                    ? Icons.check_rounded
+                                    : Icons.close_rounded,
                                 color: _isUsernameAvailable!
-                                    ? Colors.green
-                                    : Colors.red,
+                                    ? cs.primary
+                                    : cs.error,
                               )
                             : null),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
                   helperText:
                       _isUsernameAvailable == true &&
                           _usernameController.text.trim().toLowerCase() !=
                               widget.user.username.toLowerCase()
-                      ? 'Username is available! '
+                      ? 'Username is available'
                       : null,
-                  helperStyle: const TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  helperStyle: tt.bodySmall?.copyWith(color: cs.primary),
                   errorText: _isUsernameAvailable == false
                       ? 'Username is already taken'
                       : null,
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty)
+                  if (val == null || val.trim().isEmpty) {
                     return 'Username cannot be empty';
-                  if (val.trim().length < 3)
+                  }
+                  if (val.trim().length < 3) {
                     return 'Username must be at least 3 characters';
-                  if (_isUsernameAvailable == false)
+                  }
+                  if (_isUsernameAvailable == false) {
                     return 'Username is already taken';
+                  }
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 22),
               SizedBox(
                 width: double.infinity,
-                height: 50,
                 child: FilledButton(
                   onPressed:
                       _isLoading ||
@@ -1268,24 +928,16 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                           _isUsernameAvailable != true
                       ? null
                       : _save,
-                  style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
                   child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
+                      ? SizedBox(
+                          width: 22,
+                          height: 22,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
+                            strokeWidth: 2,
+                            color: cs.onSurfaceVariant,
                           ),
                         )
-                      : const Text(
-                          'Save Changes',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
+                      : const Text('Save changes'),
                 ),
               ),
             ],

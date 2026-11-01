@@ -1,52 +1,53 @@
 import 'package:flutter/material.dart';
 
-/// Semantic color tokens for ClimbIRL.
-/// These wrap around the Material 3 ColorScheme but add app-specific semantics.
+/// Colour tokens for ClimbIRL: black and white, with one signal red accent.
 class AppColors {
   AppColors._();
 
-  // Brand seed
-  static const Color seedColor = Color(0xFF6C63FF);
+  // Dark theme
+  static const Color black = Color(0xFF000000);
+  static const Color darkSurface = Color(0xFF151515);
+  static const Color darkWash = Color(0xFF262626);
+  static const Color darkHairline = Color(0xFF2C2C2C);
+  static const Color darkMuted = Color(0xFF9A9A9A);
+  static const Color white = Color(0xFFFFFFFF);
 
-  // Difficulty colors
-  static const Color easy = Color(0xFF4CAF50);
-  static const Color medium = Color(0xFFFF9800);
-  static const Color hard = Color(0xFFF44336);
-  static const Color epic = Color(0xFF9C27B0);
+  // Light theme
+  static const Color lightBackground = Color(0xFFF2F2F2);
+  static const Color lightWash = Color(0xFFECECEC);
+  static const Color lightHairline = Color(0xFFDDDDDD);
+  static const Color lightMuted = Color(0xFF6A6A6A);
+  static const Color ink = Color(0xFF0B0B0B);
 
-  // XP / Level accent
-  static const Color xpGold = Color(0xFFFFD700);
-  static const Color streak = Color(0xFFFF6B35);
+  // The one accent
+  static const Color signal = Color(0xFFE5301F);
+  static const Color signalBright = Color(0xFFFF4A36);
 
-  // Status
-  static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFF9800);
-  static const Color error = Color(0xFFF44336);
+  // Floating navigation bar
+  static const Color navBarLight = ink;
+  static const Color navBarDark = Color(0xFF242424);
 
-  // Light theme surfaces
-  static const Color lightSurface = Color(0xFFF8F9FE);
-  static const Color lightCard = Color(0xFFFFFFFF);
-  static const Color lightBackground = Color(0xFFF2F3F8);
+  static const List<Color> confetti = [signal, signalBright, darkMuted, lightHairline];
 
-  // Dark theme surfaces
-  static const Color darkSurface = Color(0xFF1A1A2E);
-  static const Color darkCard = Color(0xFF222240);
-  static const Color darkBackground = Color(0xFF12121F);
-
-  /// Returns the difficulty color for a given difficulty string.
-  static Color difficultyColor(String difficulty) {
+  /// Returns 1 (Easy) to 4 (Epic) for a difficulty string.
+  static int difficultyLevel(String difficulty) {
     switch (difficulty.toLowerCase()) {
-      case 'easy':
-        return easy;
       case 'medium':
-        return medium;
+        return 2;
       case 'hard':
-        return hard;
+        return 3;
       case 'epic':
-        return epic;
+        return 4;
       default:
-        return easy;
+        return 1;
     }
+  }
+
+  /// Returns the colour for an achievement rarity. Only Legendary gets the accent.
+  static Color rarityColor(String rarity, Brightness brightness) {
+    final dark = brightness == Brightness.dark;
+    if (rarity == 'Legendary') return dark ? signalBright : signal;
+    return dark ? white : ink;
   }
 
   /// Returns XP value for a difficulty level.

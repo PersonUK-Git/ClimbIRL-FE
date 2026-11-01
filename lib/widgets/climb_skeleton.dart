@@ -11,7 +11,7 @@ class ClimbSkeleton extends StatelessWidget {
     super.key,
     this.height,
     this.width,
-    this.borderRadius = 8,
+    this.borderRadius = 6,
     this.shape = BoxShape.rectangle,
   });
 
@@ -25,11 +25,11 @@ class ClimbSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+    final cs = Theme.of(context).colorScheme;
+
     return Shimmer.fromColors(
-      baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-      highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
+      baseColor: cs.surfaceContainerHighest,
+      highlightColor: cs.surface,
       child: Container(
         height: height,
         width: width,

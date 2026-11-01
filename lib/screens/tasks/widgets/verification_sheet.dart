@@ -8,7 +8,6 @@ import '../../../models/task_model.dart';
 import '../../../cubits/task/task_cubit.dart';
 import '../../../cubits/profile/profile_cubit.dart';
 import '../../../cubits/leaderboard/leaderboard_cubit.dart';
-import '../../../core/theme/app_colors.dart';
 
 class VerificationSheet extends StatefulWidget {
   final TaskModel task;
@@ -25,6 +24,12 @@ class _VerificationSheetState extends State<VerificationSheet> {
   final TextEditingController _noteController = TextEditingController();
   bool _isVerifying = false;
   String? _error;
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
 
   Future<void> _takePhoto() async {
     final XFile? photo = await _picker.pickImage(
@@ -72,6 +77,11 @@ class _VerificationSheetState extends State<VerificationSheet> {
         profileCubit.updateFromUser(updatedUser);
         context.read<LeaderboardCubit>().loadLeaderboard();
         if (mounted) Navigator.pop(context, true);
+      } else if (mounted) {
+        setState(() {
+          _isVerifying = false;
+          _error = "We couldn't verify this. Please try again.";
+        });
       }
     } catch (e) {
       setState(() {
@@ -89,145 +99,107 @@ class _VerificationSheetState extends State<VerificationSheet> {
     return Container(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        left: 24,
-        right: 24,
-        top: 24,
+        left: 20,
+        right: 20,
+        top: 12,
       ),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        color: cs.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: cs.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Verify Completion',
-            style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            widget.task.title,
-            style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-
-          // Photo Preview / Picker
-          GestureDetector(
-            onTap: _isVerifying ? null : _takePhoto,
-            child: Container(
-              height: 180,
-              decoration: BoxDecoration(
-                color: cs.surfaceContainerHighest.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: _image != null ? AppColors.success : cs.outlineVariant,
-                  width: 2,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              child: _image != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(22),
-                      child: Image.file(_image!, fit: BoxFit.cover),
-                    )
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.camera_alt_rounded, size: 40, color: cs.primary),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Take Proof Photo',
-                          style: tt.labelLarge?.copyWith(color: cs.primary),
-                        ),
-                      ],
-                    ),
             ),
-          ),
-          const SizedBox(height: 24),
-
-          // Note Field
-          TextField(
-            controller: _noteController,
-            enabled: !_isVerifying,
-            decoration: InputDecoration(
-              hintText: 'Add a note (optional)...',
-              filled: true,
-              fillColor: cs.surfaceContainerHighest.withValues(alpha: 0.3),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              prefixIcon: const Icon(Icons.edit_note_rounded),
-            ),
-            maxLines: 2,
-          ),
-
-          if (_error != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 22),
+            Text('Show your work', style: tt.headlineLarge),
+            const SizedBox(height: 6),
             Text(
-              _error!,
-              style: tt.bodySmall?.copyWith(color: cs.error),
-              textAlign: TextAlign.center,
-            ).animate().shake(),
-          ],
-
-          const SizedBox(height: 32),
-
-          // Submit Button
-          ElevatedButton(
-            onPressed: _isVerifying ? null : _submit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: cs.primary,
-              foregroundColor: cs.onPrimary,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 0,
+              widget.task.title,
+              style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
-            child: _isVerifying
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text(
-                    'Verify & Claim XP',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-          ),
-          
-          if (_isVerifying) ...[
-             const SizedBox(height: 16),
-             Text(
-               'Please wait while we verify your work...',
-               style: tt.labelMedium?.copyWith(
-                 color: cs.primary,
-                 fontStyle: FontStyle.italic
-               ),
-               textAlign: TextAlign.center,
-             ).animate(onPlay: (controller) => controller.repeat())
-              .fadeIn(duration: 500.ms)
-              .then()
-              .fadeOut(duration: 500.ms),
+            const SizedBox(height: 22),
+
+            // Photo Preview / Picker
+            GestureDetector(
+              onTap: _isVerifying ? null : _takePhoto,
+              child: Container(
+                height: 170,
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: _image != null
+                    ? Image.file(_image!, fit: BoxFit.cover)
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.photo_camera_outlined, size: 28, color: cs.onSurface),
+                          const SizedBox(height: 8),
+                          Text('Take a proof photo', style: tt.labelLarge),
+                        ],
+                      ),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Note Field
+            TextField(
+              controller: _noteController,
+              enabled: !_isVerifying,
+              decoration: const InputDecoration(
+                hintText: 'Add a note (optional)',
+              ),
+              maxLines: 2,
+            ),
+
+            if (_error != null) ...[
+              const SizedBox(height: 14),
+              Text(
+                _error!,
+                style: tt.bodySmall?.copyWith(color: cs.error),
+              ).animate().fadeIn(duration: 200.ms),
+            ],
+
+            const SizedBox(height: 22),
+
+            // Submit Button
+            FilledButton(
+              onPressed: _isVerifying ? null : _submit,
+              child: _isVerifying
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    )
+                  : const Text('Verify and claim XP'),
+            ),
+
+            if (_isVerifying) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Checking your proof. This can take a moment.',
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

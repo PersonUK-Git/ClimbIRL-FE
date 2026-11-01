@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/theme/app_theme.dart';
 import 'cubits/theme/theme_cubit.dart';
@@ -87,6 +88,18 @@ class _AppView extends StatelessWidget {
                     theme: AppTheme.light,
                     darkTheme: AppTheme.dark,
                     themeMode: themeState.themeMode,
+                    // Keep status bar icons readable on the paper and night backgrounds
+                    builder: (context, child) {
+                      final isDark =
+                          Theme.of(context).brightness == Brightness.dark;
+                      return AnnotatedRegion<SystemUiOverlayStyle>(
+                        value: (isDark
+                                ? SystemUiOverlayStyle.light
+                                : SystemUiOverlayStyle.dark)
+                            .copyWith(statusBarColor: Colors.transparent),
+                        child: child!,
+                      );
+                    },
                     home: _getHome(context, authState, onboardingState),
                   ),
                 );

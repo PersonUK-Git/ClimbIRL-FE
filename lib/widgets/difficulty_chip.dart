@@ -1,50 +1,31 @@
 import 'package:flutter/material.dart';
-import '../core/theme/app_colors.dart';
+import 'climb_ui.dart';
 
-/// Chip showing task difficulty with appropriate color.
+/// Difficulty dots beside the difficulty name.
 class DifficultyChip extends StatelessWidget {
   final String difficulty;
-  final bool showXP;
 
-  const DifficultyChip({
-    super.key,
-    required this.difficulty,
-    this.showXP = true,
-  });
+  const DifficultyChip({super.key, required this.difficulty});
 
   @override
   Widget build(BuildContext context) {
-    final color = AppColors.difficultyColor(difficulty);
-    final xp = AppColors.difficultyXP(difficulty);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        DifficultyDots(
+          difficulty: difficulty,
+          dotSize: 4.5,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          difficulty,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: 6),
-          Text(
-            showXP ? '$difficulty · ${xp}XP' : difficulty,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
