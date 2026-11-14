@@ -3,7 +3,7 @@ class ApiConstants {
 
   static const String _devBaseUrl =
       'https://brooke-morphotonemic-sindy.ngrok-free.dev/api';
-  static const String _prodBaseUrl = 'https://api.climbirl.trackittoo.com/api';
+  static const String _prodBaseUrl = 'https://api.climbirl.pravexio.com/api';
 
   // Toggle this to switch between environments
   static const bool _isProd = true;
@@ -32,9 +32,9 @@ class ApiConstants {
 
   // Legal & Static pages
   static const String privacyPolicy =
-      'https://api.climbirl.trackittoo.com/privacy';
+      'https://api.climbirl.pravexio.com/privacy';
   static const String termsOfService =
-      'https://api.climbirl.trackittoo.com/terms';
+      'https://api.climbirl.pravexio.com/terms';
   static const String deleteAccountInfo =
-      'https://api.climbirl.trackittoo.com/delete-account';
+      'https://api.climbirl.pravexio.com/delete-account';
 }
